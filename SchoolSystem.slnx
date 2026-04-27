@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SchoolSystem.Api/SchoolSystem.Api.csproj" />
+  <Project Path="SchoolSystem.Core/SchoolSystem.Core.csproj" />
+  <Project Path="SchoolSystem.Desktop/SchoolSystem.Desktop.csproj" />
+  <Project Path="SchoolSystem.Web/SchoolSystem.Web.csproj" />
+</Solution>

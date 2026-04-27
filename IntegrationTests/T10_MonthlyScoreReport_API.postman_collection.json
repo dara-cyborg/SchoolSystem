@@ -1,0 +1,828 @@
+{
+  "info": {
+    "_postman_id": "t10-monthly-score-report-api",
+    "name": "T10 Monthly Score Report API",
+    "description": "SchoolSystem Monthly Scores and Reports API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit Monthly Score",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('studentId');",
+              "    pm.expect(jsonData).to.have.property('classSubjectId');",
+              "    pm.expect(jsonData).to.have.property('month');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('finalScore');",
+              "    pm.expect(jsonData).to.have.property('isLocked');",
+              "});",
+              "",
+              "pm.test('Score is not locked on initial submission', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.isLocked).to.be.false;",
+              "});",
+              "",
+              "pm.test('Created score has correct values', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.studentId).to.equal(1);",
+              "    pm.expect(jsonData.classSubjectId).to.equal(1);",
+              "    pm.expect(jsonData.month).to.equal(3);",
+              "    pm.expect(jsonData.schoolYear).to.equal(2025);",
+              "    pm.expect(jsonData.finalScore).to.equal(85.5);",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('monthlyScoreId', jsonData.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 1,\n  \"month\": 3,\n  \"schoolYear\": 2025,\n  \"finalScore\": 85.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Monthly Score - Upsert",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Upserted score has new value', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.finalScore).to.equal(92.0);",
+              "});",
+              "",
+              "pm.test('Score ID remains the same', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(parseInt(pm.environment.get('monthlyScoreId')));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 1,\n  \"month\": 3,\n  \"schoolYear\": 2025,\n  \"finalScore\": 92.0\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Monthly Score (Homeroom)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('finalScore');",
+              "    pm.expect(jsonData).to.have.property('isLocked');",
+              "});",
+              "",
+              "pm.test('Updated score has new value', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.finalScore).to.equal(88.5);",
+              "});",
+              "",
+              "pm.test('Other fields unchanged', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.studentId).to.equal(1);",
+              "    pm.expect(jsonData.classSubjectId).to.equal(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "88.5"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/{{monthlyScoreId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "{{monthlyScoreId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Monthly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('month');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Report entries are an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData.entries)).to.be.true;",
+              "});",
+              "",
+              "pm.test('Each entry has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry).to.have.property('studentId');",
+              "            pm.expect(entry).to.have.property('totalScore');",
+              "            pm.expect(entry).to.have.property('rank');",
+              "        });",
+              "    }",
+              "});",
+              "",
+              "pm.test('Entries are ordered by rank', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 1) {",
+              "        for (let i = 1; i < jsonData.entries.length; i++) {",
+              "            pm.expect(jsonData.entries[i].rank).to.be.greaterThan(jsonData.entries[i-1].rank);",
+              "        }",
+              "    }",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('monthlyReportId', jsonData.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"month\": 3,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Monthly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('month');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Retrieved report has correct ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(parseInt(pm.environment.get('monthlyReportId')));",
+              "});",
+              "",
+              "pm.test('Entries contain correct data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry.studentId).to.be.a('number');",
+              "            pm.expect(entry.totalScore).to.be.a('number');",
+              "            pm.expect(entry.rank).to.be.a('number');",
+              "        });",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-reports/{{monthlyReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-reports",
+            "{{monthlyReportId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Try Update Locked Score",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains lock error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('locked');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "75.0"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/{{monthlyScoreId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "{{monthlyScoreId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit with Invalid Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains error message about student', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('Student');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 99999,\n  \"classSubjectId\": 1,\n  \"month\": 3,\n  \"schoolYear\": 2025,\n  \"finalScore\": 85.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit with Invalid ClassSubject",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains error message about class-subject', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('ClassSubject');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 99999,\n  \"month\": 3,\n  \"schoolYear\": 2025,\n  \"finalScore\": 85.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit with Unauthorized Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains authorization error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('not assigned');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 2,\n  \"month\": 3,\n  \"schoolYear\": 2025,\n  \"finalScore\": 85.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Duplicate Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains duplicate error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('already exists');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"month\": 3,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Non-Existent Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-reports/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-reports",
+            "99999"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Report with Parent Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK or 403 Forbidden', function () {",
+              "    pm.expect([200, 403]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('If 200, response has required fields', function () {",
+              "    if (pm.response.code === 200) {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('id');",
+              "        pm.expect(jsonData).to.have.property('classId');",
+              "        pm.expect(jsonData).to.have.property('entries');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{parentJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-reports/{{monthlyReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-reports",
+            "{{monthlyReportId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Non-Existent Score",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "75.0"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/monthly-scores/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "monthly-scores",
+            "99999"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7001",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string",
+      "description": "Teacher JWT token"
+    },
+    {
+      "key": "homeroomJwtToken",
+      "value": "",
+      "type": "string",
+      "description": "Homeroom JWT token"
+    },
+    {
+      "key": "parentJwtToken",
+      "value": "",
+      "type": "string",
+      "description": "Parent JWT token"
+    },
+    {
+      "key": "monthlyScoreId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "monthlyReportId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

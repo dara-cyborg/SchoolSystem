@@ -1,0 +1,633 @@
+{
+  "info": {
+    "_postman_id": "t09-gradebook-api",
+    "name": "T09 Gradebook API",
+    "description": "SchoolSystem Gradebook API for teacher working notes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Gradebook Entry",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('studentId');",
+              "    pm.expect(jsonData).to.have.property('classSubjectId');",
+              "    pm.expect(jsonData).to.have.property('label');",
+              "    pm.expect(jsonData).to.have.property('score');",
+              "    pm.expect(jsonData).to.have.property('maxScore');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "});",
+              "",
+              "pm.test('Created entry has correct values', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.studentId).to.equal(1);",
+              "    pm.expect(jsonData.classSubjectId).to.equal(1);",
+              "    pm.expect(jsonData.label).to.equal('Quiz 1');",
+              "    pm.expect(jsonData.score).to.equal(8.5);",
+              "    pm.expect(jsonData.maxScore).to.equal(10);",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('gradebookEntryId', jsonData.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 1,\n  \"label\": \"Quiz 1\",\n  \"score\": 8.5,\n  \"maxScore\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Gradebook Entry by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('studentId');",
+              "    pm.expect(jsonData).to.have.property('classSubjectId');",
+              "    pm.expect(jsonData).to.have.property('label');",
+              "    pm.expect(jsonData).to.have.property('score');",
+              "    pm.expect(jsonData).to.have.property('maxScore');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "});",
+              "",
+              "pm.test('Retrieved entry has correct ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(parseInt(pm.request.url.query.getall('')[0] || pm.variables.get('gradebookEntryId')));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/{{gradebookEntryId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "{{gradebookEntryId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Gradebook Entry",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('studentId');",
+              "    pm.expect(jsonData).to.have.property('classSubjectId');",
+              "    pm.expect(jsonData).to.have.property('label');",
+              "    pm.expect(jsonData).to.have.property('score');",
+              "    pm.expect(jsonData).to.have.property('maxScore');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "});",
+              "",
+              "pm.test('Updated entry has new values', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.label).to.equal('Quiz 1 - Revised');",
+              "    pm.expect(jsonData.score).to.equal(9.0);",
+              "    pm.expect(jsonData.maxScore).to.equal(10);",
+              "});",
+              "",
+              "pm.test('StudentId and ClassSubjectId cannot be modified', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.studentId).to.equal(1);",
+              "    pm.expect(jsonData.classSubjectId).to.equal(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Quiz 1 - Revised\",\n  \"score\": 9.0,\n  \"maxScore\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/{{gradebookEntryId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "{{gradebookEntryId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Gradebook by Class-Subject",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData)).to.be.true;",
+              "});",
+              "",
+              "pm.test('Each entry has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        jsonData.forEach(function(entry) {",
+              "            pm.expect(entry).to.have.property('id');",
+              "            pm.expect(entry).to.have.property('studentId');",
+              "            pm.expect(entry).to.have.property('classSubjectId');",
+              "            pm.expect(entry).to.have.property('label');",
+              "            pm.expect(entry).to.have.property('score');",
+              "            pm.expect(entry).to.have.property('maxScore');",
+              "            pm.expect(entry).to.have.property('createdAt');",
+              "        });",
+              "    }",
+              "});",
+              "",
+              "pm.test('Entries are ordered by ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 1) {",
+              "        for (let i = 1; i < jsonData.length; i++) {",
+              "            pm.expect(jsonData[i].id).to.be.greaterThanOrEqual(jsonData[i-1].id);",
+              "        }",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/class-subject/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "class-subject",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Gradebook by Student and Class-Subject",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData)).to.be.true;",
+              "});",
+              "",
+              "pm.test('All entries belong to specified student and class-subject', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.forEach(function(entry) {",
+              "        pm.expect(entry.studentId).to.equal(1);",
+              "        pm.expect(entry.classSubjectId).to.equal(1);",
+              "    });",
+              "});",
+              "",
+              "pm.test('Each entry has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        jsonData.forEach(function(entry) {",
+              "            pm.expect(entry).to.have.property('id');",
+              "            pm.expect(entry).to.have.property('studentId');",
+              "            pm.expect(entry).to.have.property('classSubjectId');",
+              "            pm.expect(entry).to.have.property('label');",
+              "            pm.expect(entry).to.have.property('score');",
+              "            pm.expect(entry).to.have.property('maxScore');",
+              "            pm.expect(entry).to.have.property('createdAt');",
+              "        });",
+              "    }",
+              "});",
+              "",
+              "pm.test('Entries are ordered by ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 1) {",
+              "        for (let i = 1; i < jsonData.length; i++) {",
+              "            pm.expect(jsonData[i].id).to.be.greaterThanOrEqual(jsonData[i-1].id);",
+              "        }",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/student/1/class-subject/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "student",
+            "1",
+            "class-subject",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Gradebook Entry",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 204 No Content', function () {",
+              "    pm.response.to.have.status(204);",
+              "});",
+              "",
+              "pm.test('Response body is empty', function () {",
+              "    pm.expect(pm.response.text()).to.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/{{gradebookEntryId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "{{gradebookEntryId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Non-Existent Entry",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('does not exist');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook",
+            "99999"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create with Invalid Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('Student');",
+              "    pm.expect(jsonData.message).to.include('does not exist');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 99999,\n  \"classSubjectId\": 1,\n  \"label\": \"Test\",\n  \"score\": 5,\n  \"maxScore\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create with Invalid ClassSubject",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('ClassSubject');",
+              "    pm.expect(jsonData.message).to.include('does not exist');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 99999,\n  \"label\": \"Test\",\n  \"score\": 5,\n  \"maxScore\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create with Unauthorized Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains authorization error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('not assigned');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": 1,\n  \"classSubjectId\": 2,\n  \"label\": \"Test\",\n  \"score\": 5,\n  \"maxScore\": 10\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/gradebook",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "gradebook"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7001",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gradebookEntryId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

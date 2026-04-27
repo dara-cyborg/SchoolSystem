@@ -1,0 +1,107 @@
+# Build results and temporary files
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.o
+*.so
+*.dylib
+
+# Visual Studio and IDE files
+.vs/
+.vscode/
+*.sln.user
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.csproj.user
+.idea/
+*.swp
+*.swo
+*~
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# MSBuild
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio Code
+.vscode/
+launch.json
+settings.json
+tasks.json
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Rider
+.idea/
+*.sln.iml
+*.rider
+
+# JetBrains
+.idea/
+*.iml
+
+# Database and runtime files
+*.mdf
+*.ldf
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# User-specific files
+appsettings.Development.json.local
+appsettings.Production.json.local
+*.local
+
+# Build folders
+dist/
+build/
+out/
+
+# Dependencies (if using local package cache)
+.nuget/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Node modules (if any frontend dependencies)
+node_modules/
+package-lock.json
+
+# WebRootPath generated files
+wwwroot/lib/
+
+# Environment files
+.env
+.env.local
+
+# IDE backup files
+*.bak
+*.backup

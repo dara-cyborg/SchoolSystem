@@ -1,0 +1,98 @@
+SchoolSystem/
+├── SchoolSystem.sln
+│
+├── SchoolSystem.Core/
+│   ├── Models/
+│   │   ├── User.cs
+│   │   ├── Role.cs
+│   │   ├── UserRole.cs
+│   │   ├── Grade.cs
+│   │   ├── Class.cs
+│   │   ├── Subject.cs
+│   │   ├── ClassSubject.cs
+│   │   ├── Student.cs
+│   │   ├── ParentStudent.cs
+│   │   ├── Attendance.cs
+│   │   ├── GradebookEntry.cs
+│   │   ├── MonthlyScore.cs
+│   │   ├── SemesterScore.cs
+│   │   ├── YearlyScore.cs
+│   │   ├── MonthlyReport.cs
+│   │   ├── MonthlyReportEntry.cs
+│   │   ├── SemesterReport.cs
+│   │   ├── SemesterReportEntry.cs
+│   │   ├── YearlyReport.cs
+│   │   ├── YearlyReportEntry.cs
+│   │   └── Feedback.cs
+│   ├── DTOs/
+│   │   ├── Auth/
+│   │   ├── Student/
+│   │   ├── Score/
+│   │   ├── Report/
+│   │   └── Attendance/
+│   ├── Interfaces/
+│   │   ├── IAuthService.cs
+│   │   ├── IGradeService.cs
+│   │   ├── IAttendanceService.cs
+│   │   ├── IRankingService.cs
+│   │   └── IReportService.cs
+│   └── SchoolSystem.Core.csproj
+│
+├── SchoolSystem.Api/
+│   ├── Controllers/
+│   │   ├── AuthController.cs
+│   │   ├── UsersController.cs
+│   │   ├── StudentsController.cs
+│   │   ├── ClassesController.cs
+│   │   ├── SubjectsController.cs
+│   │   ├── AttendanceController.cs
+│   │   ├── ScoresController.cs
+│   │   └── ReportsController.cs
+│   ├── Services/
+│   │   ├── AuthService.cs
+│   │   ├── GradeService.cs
+│   │   ├── AttendanceService.cs
+│   │   ├── RankingService.cs
+│   │   └── ReportService.cs
+│   ├── Data/
+│   │   └── AppDbContext.cs
+│   ├── Middleware/
+│   │   └── RoleAuthorizationMiddleware.cs
+│   ├── appsettings.json
+│   ├── Program.cs
+│   └── SchoolSystem.Api.csproj
+│
+├── SchoolSystem.Web/
+│   ├── Pages/
+│   │   ├── Auth/
+│   │   │   └── Login.cshtml
+│   │   ├── Reports/
+│   │   │   ├── Monthly.cshtml
+│   │   │   ├── Semester.cshtml
+│   │   │   └── Yearly.cshtml
+│   │   └── Feedback/
+│   │       └── Submit.cshtml
+│   ├── wwwroot/
+│   ├── appsettings.json
+│   ├── Program.cs
+│   └── SchoolSystem.Web.csproj
+│
+└── SchoolSystem.Desktop/
+    ├── Forms/
+    │   ├── Auth/
+    │   │   └── LoginForm.cs
+    │   ├── Admin/
+    │   │   ├── UserManagementForm.cs
+    │   │   ├── ClassManagementForm.cs
+    │   │   └── SubjectManagementForm.cs
+    │   ├── Teacher/
+    │   │   ├── GradebookForm.cs
+    │   │   ├── ScoreSubmitForm.cs
+    │   │   └── AttendanceForm.cs
+    │   └── Homeroom/
+    │       ├── ClassOverviewForm.cs
+    │       └── ReportSubmitForm.cs
+    ├── Services/
+    │   └── ApiClient.cs
+    ├── Program.cs
+    └── SchoolSystem.Desktop.csproj

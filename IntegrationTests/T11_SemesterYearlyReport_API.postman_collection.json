@@ -1,0 +1,755 @@
+{
+  "info": {
+    "_postman_id": "t11-semester-yearly-report-api",
+    "name": "T11 Semester Yearly Report API",
+    "description": "SchoolSystem Semester and Yearly Reports API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit Semester Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('semester');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Report entries are an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData.entries)).to.be.true;",
+              "});",
+              "",
+              "pm.test('Each entry has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry).to.have.property('studentId');",
+              "            pm.expect(entry).to.have.property('totalScore');",
+              "            pm.expect(entry).to.have.property('rank');",
+              "        });",
+              "    }",
+              "});",
+              "",
+              "pm.test('Entries are ordered by rank', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 1) {",
+              "        for (let i = 1; i < jsonData.entries.length; i++) {",
+              "            pm.expect(jsonData.entries[i].rank).to.be.greaterThan(jsonData.entries[i-1].rank);",
+              "        }",
+              "    }",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('semesterReportId', jsonData.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"semester\": 1,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Semester Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('semester');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Retrieved report has correct ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(parseInt(pm.environment.get('semesterReportId')));",
+              "});",
+              "",
+              "pm.test('Entries contain correct data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry.studentId).to.be.a('number');",
+              "            pm.expect(entry.totalScore).to.be.a('number');",
+              "            pm.expect(entry.rank).to.be.a('number');",
+              "        });",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/{{semesterReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "{{semesterReportId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Duplicate Semester Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains duplicate error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('already exists');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"semester\": 1,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Semester Report with Missing Scores",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains missing scores error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('Not all');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"semester\": 2,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Non-Existent Semester Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "99999"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Semester Report with Parent Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK or 403 Forbidden', function () {",
+              "    pm.expect([200, 403]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('If 200, response has required fields', function () {",
+              "    if (pm.response.code === 200) {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('id');",
+              "        pm.expect(jsonData).to.have.property('classId');",
+              "        pm.expect(jsonData).to.have.property('entries');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{parentJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/semester-reports/{{semesterReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "semester-reports",
+            "{{semesterReportId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Yearly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Report entries are an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(Array.isArray(jsonData.entries)).to.be.true;",
+              "});",
+              "",
+              "pm.test('Each entry has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry).to.have.property('studentId');",
+              "            pm.expect(entry).to.have.property('totalScore');",
+              "            pm.expect(entry).to.have.property('rank');",
+              "        });",
+              "    }",
+              "});",
+              "",
+              "pm.test('Entries are ordered by rank', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 1) {",
+              "        for (let i = 1; i < jsonData.entries.length; i++) {",
+              "            pm.expect(jsonData.entries[i].rank).to.be.greaterThan(jsonData.entries[i-1].rank);",
+              "        }",
+              "    }",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('yearlyReportId', jsonData.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Yearly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('classId');",
+              "    pm.expect(jsonData).to.have.property('schoolYear');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "    pm.expect(jsonData).to.have.property('entries');",
+              "});",
+              "",
+              "pm.test('Retrieved report has correct ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.equal(parseInt(pm.environment.get('yearlyReportId')));",
+              "});",
+              "",
+              "pm.test('Entries contain correct data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.entries.length > 0) {",
+              "        jsonData.entries.forEach(function(entry) {",
+              "            pm.expect(entry.studentId).to.be.a('number');",
+              "            pm.expect(entry.totalScore).to.be.a('number');",
+              "            pm.expect(entry.rank).to.be.a('number');",
+              "        });",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/{{yearlyReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "{{yearlyReportId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Duplicate Yearly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains duplicate error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('already exists');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"schoolYear\": 2025\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Yearly Report with Missing Semester Scores",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Response contains missing scores error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('Not all');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": 1,\n  \"schoolYear\": 2026\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Non-Existent Yearly Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 Not Found', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response contains error message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{homeroomJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "99999"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Yearly Report with Parent Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK or 403 Forbidden', function () {",
+              "    pm.expect([200, 403]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('If 200, response has required fields', function () {",
+              "    if (pm.response.code === 200) {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('id');",
+              "        pm.expect(jsonData).to.have.property('classId');",
+              "        pm.expect(jsonData).to.have.property('entries');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{parentJwtToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/yearly-reports/{{yearlyReportId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "yearly-reports",
+            "{{yearlyReportId}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7001",
+      "type": "string"
+    },
+    {
+      "key": "homeroomJwtToken",
+      "value": "",
+      "type": "string",
+      "description": "Homeroom JWT token"
+    },
+    {
+      "key": "parentJwtToken",
+      "value": "",
+      "type": "string",
+      "description": "Parent JWT token"
+    },
+    {
+      "key": "semesterReportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "yearlyReportId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
