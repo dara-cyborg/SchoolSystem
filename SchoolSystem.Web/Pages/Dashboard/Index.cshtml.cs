@@ -20,7 +20,7 @@ public class IndexModel : AuthenticatedPageModel
     public List<ChildDashboardViewModel> Children { get; set; } = new();
 
     public IndexModel(ApiHttpClientFactory apiClientFactory, ILogger<IndexModel> logger, AppDbContext context)
-        : base(apiClientFactory)
+        : base(apiClientFactory, logger)
     {
         _logger = logger;
         _context = context;

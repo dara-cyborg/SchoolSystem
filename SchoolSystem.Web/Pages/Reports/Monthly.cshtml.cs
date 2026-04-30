@@ -27,7 +27,7 @@ public class MonthlyModel : AuthenticatedPageModel
     public int RequestedStudentId { get; set; }
 
     public MonthlyModel(ApiHttpClientFactory apiClientFactory, ILogger<MonthlyModel> logger, AppDbContext context)
-        : base(apiClientFactory)
+        : base(apiClientFactory, logger)
     {
         _logger = logger;
         _context = context;
@@ -38,7 +38,7 @@ public class MonthlyModel : AuthenticatedPageModel
         var tokenCheck = CheckToken();
         if (tokenCheck != null) return tokenCheck;
         RequestedStudentId = studentId;
-        
+
         try
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -130,7 +130,7 @@ public class MonthlyModel : AuthenticatedPageModel
                 })
                 .ToListAsync();
 
-            // 3. Get attendance data
+            // 4. Get attendance data
             var attendanceResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/attendance/summary/{studentId}?month={report.Month}&schoolYear={report.SchoolYear}");
             AttendanceSummaryDto? attendance = null;
             if (attendanceResponse.IsSuccessStatusCode)
@@ -139,7 +139,7 @@ public class MonthlyModel : AuthenticatedPageModel
                 attendance = JsonSerializer.Deserialize<AttendanceSummaryDto>(attContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
 
-            // 4. Map to ViewModel
+            // 5. Map to ViewModel
             var studentEntry = report.Entries.FirstOrDefault(e => e.StudentId == studentId);
 
             ReportViewModel = new MonthlyReportViewModel
