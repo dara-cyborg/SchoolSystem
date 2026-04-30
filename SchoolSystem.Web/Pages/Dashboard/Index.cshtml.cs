@@ -1,31 +1,36 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SchoolSystem.Core.DTOs.Report;
+using Microsoft.EntityFrameworkCore;
+using SchoolSystem.Api.Data;
+using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.Student;
 using SchoolSystem.Web.Models.ViewModels;
+using SchoolSystem.Web.Services;
 using System.Security.Claims;
 
 namespace SchoolSystem.Web.Pages.Dashboard;
 
 [Authorize]
-public class IndexModel : PageModel
+public class IndexModel : AuthenticatedPageModel
 {
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<IndexModel> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly AppDbContext _context;
 
     public List<ChildDashboardViewModel> Children { get; set; } = new();
 
-    public IndexModel(IHttpClientFactory httpClientFactory, ILogger<IndexModel> logger, IConfiguration configuration)
+    public IndexModel(ApiHttpClientFactory apiClientFactory, ILogger<IndexModel> logger, AppDbContext context)
+        : base(apiClientFactory)
     {
-        _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _configuration = configuration;
+        _context = context;
     }
 
     public async Task<IActionResult> OnGetAsync()
     {
+        var tokenCheck = CheckToken();
+        if (tokenCheck != null) return tokenCheck;
+        
         try
         {
             // Read parent user ID from authenticated claims
@@ -36,8 +41,8 @@ public class IndexModel : PageModel
                 return RedirectToPage("/Auth/Login");
             }
 
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:5001";
-            var httpClient = _httpClientFactory.CreateClient();
+            var apiBaseUrl = ApiClientFactory.GetApiBaseUrl();
+            var httpClient = ApiClientFactory.CreateAuthenticatedClient();
 
             // Fetch the parent's children list
             var studentsResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/students/parent/{parentUserId}?pageSize=100");
@@ -49,34 +54,11 @@ public class IndexModel : PageModel
             }
 
             var content = await studentsResponse.Content.ReadAsStringAsync();
-            var studentsData = System.Text.Json.JsonSerializer.Deserialize<dynamic>(content, 
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            // Handle pagination result wrapper
-            var studentList = new List<StudentDto>();
-            if (studentsData is not null)
-            {
-                try
-                {
-                    // Check if it's a paginated response with Items property
-                    if (studentsData.GetType().GetProperty("Items") != null)
-                    {
-                        var itemsJson = System.Text.Json.JsonSerializer.Serialize(studentsData.GetProperty("Items"));
-                        studentList = System.Text.Json.JsonSerializer.Deserialize<List<StudentDto>>(itemsJson,
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                    }
-                    else
-                    {
-                        var listJson = System.Text.Json.JsonSerializer.Serialize(studentsData);
-                        studentList = System.Text.Json.JsonSerializer.Deserialize<List<StudentDto>>(listJson,
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error parsing students response: {ex.Message}");
-                }
-            }
+            var pagedResult = System.Text.Json.JsonSerializer.Deserialize<PagedResult<StudentDto>>(
+                content,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+            var studentList = pagedResult?.Items ?? new List<StudentDto>();
 
             // For each child, fetch the latest report
             foreach (var student in studentList)
@@ -90,9 +72,7 @@ public class IndexModel : PageModel
                     LatestReportSummary = ""
                 };
 
-                // Try to fetch the latest available report (yearly > semester > monthly)
-                var reportSummary = await FetchLatestReportSummaryAsync(httpClient, student.Id, apiBaseUrl);
-                childViewModel.LatestReportSummary = reportSummary;
+                await PopulateLatestReportSummaryAsync(childViewModel);
 
                 Children.Add(childViewModel);
             }
@@ -107,58 +87,83 @@ public class IndexModel : PageModel
         }
     }
 
-    private async Task<string> FetchLatestReportSummaryAsync(HttpClient httpClient, int studentId, string apiBaseUrl)
+    private async Task PopulateLatestReportSummaryAsync(ChildDashboardViewModel child)
     {
         try
         {
-            // Try yearly report first (most comprehensive)
-            var yearlyResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/yearly-reports/{studentId}");
-            if (yearlyResponse.IsSuccessStatusCode)
-            {
-                var content = await yearlyResponse.Content.ReadAsStringAsync();
-                var report = System.Text.Json.JsonSerializer.Deserialize<YearlyReportDto>(content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (report?.Entries.FirstOrDefault() is YearlyReportEntryDto entry && entry.TotalScore.HasValue)
+            var latestYearly = await _context.YearlyReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == child.StudentId)
+                .Select(e => new
                 {
-                    return $"Yearly Score: {entry.TotalScore:F2} | Rank: {entry.Rank}";
-                }
-            }
+                    ReportId = e.ReportId,
+                    e.TotalScore,
+                    e.Rank,
+                    e.Report.SchoolYear
+                })
+                .OrderByDescending(e => e.SchoolYear)
+                .ThenByDescending(e => e.ReportId)
+                .FirstOrDefaultAsync();
 
-            // Try semester report
-            var semesterResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/semester-reports/{studentId}");
-            if (semesterResponse.IsSuccessStatusCode)
-            {
-                var content = await semesterResponse.Content.ReadAsStringAsync();
-                var report = System.Text.Json.JsonSerializer.Deserialize<SemesterReportDto>(content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            child.LatestYearlyReportId = latestYearly?.ReportId;
 
-                if (report?.Entries.FirstOrDefault() is SemesterReportEntryDto entry && entry.TotalScore.HasValue)
+            var latestSemester = await _context.SemesterReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == child.StudentId)
+                .Select(e => new
                 {
-                    return $"Semester {report.Semester} Score: {entry.TotalScore:F2} | Rank: {entry.Rank}";
-                }
-            }
+                    ReportId = e.ReportId,
+                    e.TotalScore,
+                    e.Rank,
+                    e.Report.Semester,
+                    e.Report.SchoolYear
+                })
+                .OrderByDescending(e => e.SchoolYear)
+                .ThenByDescending(e => e.Semester)
+                .ThenByDescending(e => e.ReportId)
+                .FirstOrDefaultAsync();
 
-            // Try monthly report
-            var monthlyResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/monthly-reports/{studentId}");
-            if (monthlyResponse.IsSuccessStatusCode)
-            {
-                var content = await monthlyResponse.Content.ReadAsStringAsync();
-                var report = System.Text.Json.JsonSerializer.Deserialize<MonthlyReportDto>(content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            child.LatestSemesterReportId = latestSemester?.ReportId;
 
-                if (report?.Entries.FirstOrDefault() is MonthlyReportEntryDto entry && entry.TotalScore.HasValue)
+            var latestMonthly = await _context.MonthlyReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == child.StudentId)
+                .Select(e => new
                 {
-                    return $"Month {report.Month} Score: {entry.TotalScore:F2} | Rank: {entry.Rank}";
-                }
-            }
+                    ReportId = e.ReportId,
+                    e.TotalScore,
+                    e.Rank,
+                    e.Report.Month,
+                    e.Report.SchoolYear
+                })
+                .OrderByDescending(e => e.SchoolYear)
+                .ThenByDescending(e => e.Month)
+                .ThenByDescending(e => e.ReportId)
+                .FirstOrDefaultAsync();
 
-            return "No reports available";
+            child.LatestMonthlyReportId = latestMonthly?.ReportId;
+
+            if (latestYearly != null)
+            {
+                child.LatestReportSummary = $"Yearly Score: {(latestYearly.TotalScore ?? 0):F2} | Rank: {latestYearly.Rank}";
+            }
+            else if (latestSemester != null)
+            {
+                child.LatestReportSummary = $"Semester {latestSemester.Semester} Score: {(latestSemester.TotalScore ?? 0):F2} | Rank: {latestSemester.Rank}";
+            }
+            else if (latestMonthly != null)
+            {
+                child.LatestReportSummary = $"Month {latestMonthly.Month} Score: {(latestMonthly.TotalScore ?? 0):F2} | Rank: {latestMonthly.Rank}";
+            }
+            else
+            {
+                child.LatestReportSummary = "No reports available";
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error fetching report summary for student {studentId}: {ex.Message}");
-            return "Error loading report";
+            _logger.LogError($"Error fetching report summary for student {child.StudentId}: {ex.Message}");
+            child.LatestReportSummary = "Error loading report";
         }
     }
 

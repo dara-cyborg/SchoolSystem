@@ -10,7 +10,26 @@
         <a href="/Dashboard" class="btn btn-secondary">Back to Dashboard</a>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.ReportViewModel.ErrorMessage))
+    @if (Model.ShowReportSelection)
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Select a Yearly Report</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach (var r in Model.AvailableReports)
+                {
+                    <a class="list-group-item list-group-item-action"
+                       asp-page="/Reports/Yearly"
+                       asp-route-studentId="@Model.RequestedStudentId"
+                       asp-route-reportId="@r.Id">
+                        School Year @r.SchoolYear
+                    </a>
+                }
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.ReportViewModel.ErrorMessage))
     {
         <div class="alert alert-danger" role="alert">
             @Model.ReportViewModel.ErrorMessage
@@ -28,6 +47,37 @@
                     <div class="col-md-4"><strong>Class:</strong> @Model.ReportViewModel.ClassName</div>
                     <div class="col-md-4"><strong>School Year:</strong> @Model.ReportViewModel.SchoolYear</div>
                 </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Subject Scores</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Yearly Average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var score in Model.SubjectScores)
+                        {
+                            <tr>
+                                <td>@score.SubjectName</td>
+                                <td>@score.FinalScore</td>
+                            </tr>
+                        }
+                        @if (!Model.SubjectScores.Any())
+                        {
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-3">No subject scores recorded for this year.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
 

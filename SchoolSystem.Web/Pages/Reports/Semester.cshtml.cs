@@ -1,81 +1,109 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using SchoolSystem.Api.Data;
+using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.Attendance;
 using SchoolSystem.Core.DTOs.Report;
 using SchoolSystem.Core.DTOs.Student;
+using SchoolSystem.Web.Models.ViewModels;
+using SchoolSystem.Web.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace SchoolSystem.Web.Pages.Reports;
 
 [Authorize]
-public class SemesterModel : PageModel
+public class SemesterModel : AuthenticatedPageModel
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<SemesterModel> _logger;
+    private readonly AppDbContext _context;
 
     public SemesterReportViewModel ReportViewModel { get; set; } = new();
+    public List<SubjectScoreViewModel> SubjectScores { get; set; } = new();
+    public List<SemesterReportDto> AvailableReports { get; set; } = new();
+    public bool ShowReportSelection => AvailableReports.Any();
+    public int RequestedStudentId { get; set; }
 
-    public SemesterModel(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<SemesterModel> logger)
+    public SemesterModel(ApiHttpClientFactory apiClientFactory, ILogger<SemesterModel> logger, AppDbContext context)
+        : base(apiClientFactory)
     {
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
         _logger = logger;
+        _context = context;
     }
 
-    public async Task<IActionResult> OnGetAsync(int studentId, int reportId)
+    public async Task<IActionResult> OnGetAsync(int studentId, int reportId = 0)
     {
+        var tokenCheck = CheckToken();
+        if (tokenCheck != null) return tokenCheck;
+        RequestedStudentId = studentId;
+        
         try
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var parentUserId))
             {
-                return Forbid();
+                return NotFound();
             }
 
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:5001";
-            var httpClient = _httpClientFactory.CreateClient();
+            var apiBaseUrl = ApiClientFactory.GetApiBaseUrl();
+            var httpClient = ApiClientFactory.CreateAuthenticatedClient();
 
             // 1. Verify ownership and get student details
             var studentsResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/students/parent/{parentUserId}?pageSize=100");
             if (!studentsResponse.IsSuccessStatusCode)
             {
                 _logger.LogWarning($"Failed to verify ownership for parent {parentUserId}");
-                return Forbid();
+                return NotFound();
             }
 
             var content = await studentsResponse.Content.ReadAsStringAsync();
-            var studentsData = JsonSerializer.Deserialize<dynamic>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            var studentList = new List<StudentDto>();
-            if (studentsData is not null)
-            {
-                if (studentsData.GetType().GetProperty("Items") != null)
-                {
-                    var itemsJson = JsonSerializer.Serialize(studentsData.GetProperty("Items"));
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(itemsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-                else
-                {
-                    var listJson = JsonSerializer.Serialize(studentsData);
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-            }
+            var pagedResult = JsonSerializer.Deserialize<PagedResult<StudentDto>>(
+                content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+            var studentList = pagedResult?.Items ?? new List<StudentDto>();
 
             var student = studentList.FirstOrDefault(s => s.Id == studentId);
             if (student == null)
             {
-                return Forbid();
+                return NotFound();
             }
 
-            // 2. Get report data
+            // 2. If reportId is not provided, fetch reports that include this student
+            if (reportId == 0)
+            {
+                var availableReports = await _context.SemesterReports
+                    .AsNoTracking()
+                    .Include(sr => sr.Entries)
+                    .Where(sr => sr.Entries.Any(e => e.StudentId == studentId))
+                    .OrderByDescending(sr => sr.SchoolYear)
+                    .ThenByDescending(sr => sr.Semester)
+                    .ToListAsync();
+
+                if (!availableReports.Any())
+                {
+                    ReportViewModel.ErrorMessage = "No semester reports are available for this student's class.";
+                    return Page();
+                }
+
+                // Map to DTOs for display
+                AvailableReports = availableReports.Select(sr => new SemesterReportDto
+                {
+                    Id = sr.Id,
+                    Semester = sr.Semester,
+                    SchoolYear = sr.SchoolYear
+                }).ToList();
+
+                return Page();
+            }
+
+            // 3. Get report data
             var reportResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/semester-reports/{reportId}");
             if (!reportResponse.IsSuccessStatusCode)
             {
-                ReportViewModel.ErrorMessage = "Failed to load report data.";
-                return Page();
+                return NotFound();
             }
 
             var reportContent = await reportResponse.Content.ReadAsStringAsync();
@@ -83,9 +111,26 @@ public class SemesterModel : PageModel
 
             if (report == null)
             {
-                ReportViewModel.ErrorMessage = "Report not found.";
-                return Page();
+                return NotFound();
             }
+
+            if (!report.Entries.Any(e => e.StudentId == studentId))
+            {
+                return Forbid();
+            }
+
+            SubjectScores = await _context.SemesterScores
+                .AsNoTracking()
+                .Include(ss => ss.ClassSubject)
+                .ThenInclude(cs => cs.Subject)
+                .Where(ss => ss.StudentId == studentId && ss.Semester == report.Semester && ss.SchoolYear == report.SchoolYear)
+                .OrderBy(ss => ss.ClassSubject.Subject.Name)
+                .Select(ss => new SubjectScoreViewModel
+                {
+                    SubjectName = ss.ClassSubject.Subject.Name,
+                    FinalScore = ss.FinalScore ?? 0
+                })
+                .ToListAsync();
 
             // 3. Get attendance data (Using month=1 as default since API requires a valid month)
             int defaultMonthForAttendance = 1; 
@@ -144,3 +189,4 @@ public class SemesterReportViewModel
     public string ErrorMessage { get; set; } = string.Empty;
     public int StudentId { get; set; }
 }
+

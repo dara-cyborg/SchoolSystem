@@ -1,0 +1,17 @@
+@page
+@model SchoolSystem.Web.Pages.Auth.AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+}
+<div class="container mt-5">
+    <div class="alert alert-danger">
+        <h4>Access Denied</h4>
+        <p>You do not have permission to access this page.</p>
+        <a asp-page="/Dashboard/Index" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+        <a asp-page="/Auth/Login" class="btn btn-secondary">
+            Login as different user
+        </a>
+    </div>
+</div>

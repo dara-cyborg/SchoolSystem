@@ -10,6 +10,7 @@ public class LogoutModel : PageModel
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        Response.Cookies.Delete("ApiToken");
         if (returnUrl != null)
         {
             return LocalRedirect(returnUrl);

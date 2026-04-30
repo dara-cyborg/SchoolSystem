@@ -9,7 +9,7 @@ using SchoolSystem.Core.Interfaces;
 namespace SchoolSystem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/monthly-reports")]
 public class MonthlyReportsController : ControllerBase {
     private readonly IMonthlyReportService _monthlyReportService;
     private readonly AppDbContext _context;
@@ -44,6 +44,7 @@ public class MonthlyReportsController : ControllerBase {
     public async Task<IActionResult> GetMonthlyReport(int id, CancellationToken cancellationToken = default) {
         try {
             var result = await _monthlyReportService.GetReportAsync(id, cancellationToken);
+
             if (result == null) {
                 return NotFound(new { message = $"Monthly report with ID {id} does not exist." });
             }

@@ -8,7 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<WebAuthService>();
+builder.Services.AddScoped<ApiHttpClientFactory>();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 // Configure DbContext for Web (Cookie auth also needs DB access)
 builder.Services.AddDbContext<AppDbContext>(options =>

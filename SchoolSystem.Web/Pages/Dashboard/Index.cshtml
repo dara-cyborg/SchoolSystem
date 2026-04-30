@@ -30,8 +30,56 @@
                             </p>
                         </div>
                         <div class="card-footer bg-white border-top">
-                            <a href="/Reports/@child.StudentId" class="btn btn-sm btn-primary">View Reports</a>
-                            <a href="/Feedback/@child.StudentId" class="btn btn-sm btn-secondary">Feedback</a>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (child.LatestMonthlyReportId.HasValue)
+                                {
+                                    <a asp-page="/Reports/Monthly"
+                                       asp-route-studentId="@child.StudentId"
+                                       asp-route-reportId="@child.LatestMonthlyReportId"
+                                       class="btn btn-sm btn-primary">Monthly Report</a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Reports/Monthly" asp-route-studentId="@child.StudentId" class="btn btn-sm btn-primary">Monthly Report</a>
+                                }
+
+                                @if (child.LatestSemesterReportId.HasValue)
+                                {
+                                    <a asp-page="/Reports/Semester"
+                                       asp-route-studentId="@child.StudentId"
+                                       asp-route-reportId="@child.LatestSemesterReportId"
+                                       class="btn btn-sm btn-primary">Semester Report</a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Reports/Semester" asp-route-studentId="@child.StudentId" class="btn btn-sm btn-primary">Semester Report</a>
+                                }
+
+                                @if (child.LatestYearlyReportId.HasValue)
+                                {
+                                    <a asp-page="/Reports/Yearly"
+                                       asp-route-studentId="@child.StudentId"
+                                       asp-route-reportId="@child.LatestYearlyReportId"
+                                       class="btn btn-sm btn-primary">Yearly Report</a>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Reports/Yearly" asp-route-studentId="@child.StudentId" class="btn btn-sm btn-primary">Yearly Report</a>
+                                }
+
+                                @if (child.LatestMonthlyReportId.HasValue)
+                                {
+                                    <a asp-page="/Feedback/Submit"
+                                       asp-route-reportType="monthly"
+                                       asp-route-reportId="@child.LatestMonthlyReportId"
+                                       class="btn btn-sm btn-secondary">Submit Feedback (Monthly)</a>
+
+                                    <a asp-page="/Feedback/History"
+                                       asp-route-reportType="monthly"
+                                       asp-route-reportId="@child.LatestMonthlyReportId"
+                                       class="btn btn-sm btn-secondary">Feedback History</a>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>

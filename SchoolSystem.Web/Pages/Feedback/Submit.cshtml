@@ -21,6 +21,13 @@
                     }
 
                     <form method="post">
+                        <input type="hidden" name="Input.ReportType" value="@Model.Input.ReportType" />
+                        <input type="hidden" name="Input.ReportId" value="@Model.Input.ReportId" />
+
+                        <div class="alert alert-info">
+                            Submitting feedback for <strong class="text-capitalize">@Model.Input.ReportType</strong> report <strong>#@Model.Input.ReportId</strong>
+                        </div>
+
                         <div class="mb-3">
                             <label asp-for="Input.ReportType" class="form-label">Report Type</label>
                             <select asp-for="Input.ReportType" class="form-select" readonly style="pointer-events: none; background-color: #e9ecef;">
