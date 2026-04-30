@@ -5,8 +5,12 @@ namespace SchoolSystem.Web.Pages;
 
 public class IndexModel : PageModel
 {
-    public void OnGet()
+    public IActionResult OnGet()
     {
-
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Dashboard/Index");
+        }
+        return RedirectToPage("/Auth/Login");
     }
 }

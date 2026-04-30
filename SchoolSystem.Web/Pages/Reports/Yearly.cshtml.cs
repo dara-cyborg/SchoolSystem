@@ -1,81 +1,105 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using SchoolSystem.Api.Data;
+using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.Attendance;
 using SchoolSystem.Core.DTOs.Report;
 using SchoolSystem.Core.DTOs.Student;
+using SchoolSystem.Web.Models.ViewModels;
+using SchoolSystem.Web.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace SchoolSystem.Web.Pages.Reports;
 
 [Authorize]
-public class YearlyModel : PageModel
+public class YearlyModel : AuthenticatedPageModel
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<YearlyModel> _logger;
+    private readonly AppDbContext _context;
 
     public YearlyReportViewModel ReportViewModel { get; set; } = new();
+    public List<SubjectScoreViewModel> SubjectScores { get; set; } = new();
+    public List<YearlyReportDto> AvailableReports { get; set; } = new();
+    public bool ShowReportSelection => AvailableReports.Any();
+    public int RequestedStudentId { get; set; }
 
-    public YearlyModel(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<YearlyModel> logger)
+    public YearlyModel(ApiHttpClientFactory apiClientFactory, ILogger<YearlyModel> logger, AppDbContext context)
+        : base(apiClientFactory)
     {
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
         _logger = logger;
+        _context = context;
     }
 
-    public async Task<IActionResult> OnGetAsync(int studentId, int reportId)
+    public async Task<IActionResult> OnGetAsync(int studentId, int reportId = 0)
     {
+        var tokenCheck = CheckToken();
+        if (tokenCheck != null) return tokenCheck;
+        RequestedStudentId = studentId;
+        
         try
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var parentUserId))
             {
-                return Forbid();
+                return NotFound();
             }
 
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:5001";
-            var httpClient = _httpClientFactory.CreateClient();
+            var apiBaseUrl = ApiClientFactory.GetApiBaseUrl();
+            var httpClient = ApiClientFactory.CreateAuthenticatedClient();
 
             // 1. Verify ownership and get student details
             var studentsResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/students/parent/{parentUserId}?pageSize=100");
             if (!studentsResponse.IsSuccessStatusCode)
             {
                 _logger.LogWarning($"Failed to verify ownership for parent {parentUserId}");
-                return Forbid();
+                return NotFound();
             }
 
             var content = await studentsResponse.Content.ReadAsStringAsync();
-            var studentsData = JsonSerializer.Deserialize<dynamic>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            var studentList = new List<StudentDto>();
-            if (studentsData is not null)
-            {
-                if (studentsData.GetType().GetProperty("Items") != null)
-                {
-                    var itemsJson = JsonSerializer.Serialize(studentsData.GetProperty("Items"));
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(itemsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-                else
-                {
-                    var listJson = JsonSerializer.Serialize(studentsData);
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-            }
+            var pagedResult = JsonSerializer.Deserialize<PagedResult<StudentDto>>(
+                content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+            var studentList = pagedResult?.Items ?? new List<StudentDto>();
 
             var student = studentList.FirstOrDefault(s => s.Id == studentId);
             if (student == null)
             {
-                return Forbid();
+                return NotFound();
             }
 
-            // 2. Get report data
+            // 2. Always populate available reports (lightweight — no entries loaded)
+            var allYearlyReports = await _context.YearlyReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId)
+                .Select(e => new { e.ReportId, e.Report.SchoolYear })
+                .Distinct()
+                .OrderByDescending(e => e.SchoolYear)
+                .ToListAsync();
+
+            AvailableReports = allYearlyReports.Select(r => new YearlyReportDto
+            {
+                Id = r.ReportId,
+                SchoolYear = r.SchoolYear
+            }).ToList();
+
+            if (reportId == 0)
+            {
+                if (!AvailableReports.Any())
+                {
+                    ReportViewModel.ErrorMessage = "No yearly reports are available for this student.";
+                }
+                return Page();
+            }
+
+            // 3. Get report data
             var reportResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/yearly-reports/{reportId}");
             if (!reportResponse.IsSuccessStatusCode)
             {
-                ReportViewModel.ErrorMessage = "Failed to load report data.";
-                return Page();
+                return NotFound();
             }
 
             var reportContent = await reportResponse.Content.ReadAsStringAsync();
@@ -83,9 +107,26 @@ public class YearlyModel : PageModel
 
             if (report == null)
             {
-                ReportViewModel.ErrorMessage = "Report not found.";
-                return Page();
+                return NotFound();
             }
+
+            if (!report.Entries.Any(e => e.StudentId == studentId))
+            {
+                return Forbid();
+            }
+
+            SubjectScores = await _context.YearlyScores
+                .AsNoTracking()
+                .Include(ys => ys.ClassSubject)
+                .ThenInclude(cs => cs.Subject)
+                .Where(ys => ys.StudentId == studentId && ys.SchoolYear == report.SchoolYear)
+                .OrderBy(ys => ys.ClassSubject.Subject.Name)
+                .Select(ys => new SubjectScoreViewModel
+                {
+                    SubjectName = ys.ClassSubject.Subject.Name,
+                    FinalScore = ys.FinalScore ?? 0
+                })
+                .ToListAsync();
 
             // 3. Get attendance data (Using month=1 as default since API requires a valid month)
             int defaultMonthForAttendance = 1; 
@@ -102,6 +143,7 @@ public class YearlyModel : PageModel
 
             ReportViewModel = new YearlyReportViewModel
             {
+                ReportId = reportId,
                 StudentName = student.Name,
                 ClassName = student.ClassName,
                 SchoolYear = report.SchoolYear.ToString(),
@@ -131,6 +173,7 @@ public class YearlyModel : PageModel
 
 public class YearlyReportViewModel
 {
+    public int ReportId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public string SchoolYear { get; set; } = string.Empty;
@@ -142,3 +185,4 @@ public class YearlyReportViewModel
     public string ErrorMessage { get; set; } = string.Empty;
     public int StudentId { get; set; }
 }
+

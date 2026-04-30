@@ -52,7 +52,7 @@ public class LoginModel : PageModel
 
         if (ModelState.IsValid)
         {
-            var principal = await _authService.ValidateUserAsync(Input.Username, Input.Password);
+            var (principal, apiToken) = await _authService.LoginAndGetTokenAsync(Input.Username, Input.Password);
 
             if (principal != null)
             {
@@ -65,6 +65,16 @@ public class LoginModel : PageModel
                     CookieAuthenticationDefaults.AuthenticationScheme, 
                     principal, 
                     authProperties);
+
+                // Store JWT token in cookie for API calls (persists across restarts)
+                var cookieOptions = new Microsoft.AspNetCore.Http.CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddHours(8)
+                };
+                Response.Cookies.Append("ApiToken", apiToken ?? "", cookieOptions);
 
                 return LocalRedirect(ReturnUrl);
             }

@@ -1,18 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.Feedback;
 using SchoolSystem.Core.DTOs.Student;
+using SchoolSystem.Web.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace SchoolSystem.Web.Pages.Feedback;
 
 [Authorize]
-public class HistoryModel : PageModel
+public class HistoryModel : AuthenticatedPageModel
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<HistoryModel> _logger;
 
     public List<FeedbackHistoryViewModel> FeedbackHistory { get; set; } = new();
@@ -21,15 +21,17 @@ public class HistoryModel : PageModel
     public string ErrorMessage { get; set; } = string.Empty;
     public int MatchedStudentId { get; set; } // Added to construct working report links
 
-    public HistoryModel(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<HistoryModel> logger)
+    public HistoryModel(ApiHttpClientFactory apiClientFactory, ILogger<HistoryModel> logger)
+        : base(apiClientFactory)
     {
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
         _logger = logger;
     }
 
     public async Task<IActionResult> OnGetAsync(string reportType, int reportId)
     {
+        var tokenCheck = CheckToken();
+        if (tokenCheck != null) return tokenCheck;
+        
         ReportType = reportType;
         ReportId = reportId;
 
@@ -40,13 +42,8 @@ public class HistoryModel : PageModel
 
         try
         {
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:5001";
-            var httpClient = _httpClientFactory.CreateClient();
-
-            if (Request.Headers.TryGetValue("Cookie", out var cookieValues))
-            {
-                httpClient.DefaultRequestHeaders.Add("Cookie", cookieValues.ToString());
-            }
+            var apiBaseUrl = ApiClientFactory.GetApiBaseUrl();
+            var httpClient = ApiClientFactory.CreateAuthenticatedClient();
 
             var response = await httpClient.GetAsync($"{apiBaseUrl}/api/feedback/report/{reportType}/{reportId}");
 
@@ -61,6 +58,11 @@ public class HistoryModel : PageModel
 
             if (feedbacks != null)
             {
+                var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                feedbacks = feedbacks
+                    .Where(f => f.ParentUserId == currentUserId)
+                    .ToList();
+
                 FeedbackHistory = feedbacks.Select(f => new FeedbackHistoryViewModel
                 {
                     Id = f.Id,
@@ -95,30 +97,19 @@ public class HistoryModel : PageModel
                 return false;
             }
 
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:5001";
-            var httpClient = _httpClientFactory.CreateClient();
+            var apiBaseUrl = ApiClientFactory.GetApiBaseUrl();
+            var httpClient = ApiClientFactory.CreateAuthenticatedClient();
 
             // 1. Get parent's students
             var studentsResponse = await httpClient.GetAsync($"{apiBaseUrl}/api/students/parent/{parentUserId}?pageSize=100");
             if (!studentsResponse.IsSuccessStatusCode) return false;
 
             var content = await studentsResponse.Content.ReadAsStringAsync();
-            var studentsData = JsonSerializer.Deserialize<dynamic>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            var studentList = new List<StudentDto>();
-            if (studentsData is not null)
-            {
-                if (studentsData.GetType().GetProperty("Items") != null)
-                {
-                    var itemsJson = JsonSerializer.Serialize(studentsData.GetProperty("Items"));
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(itemsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-                else
-                {
-                    var listJson = JsonSerializer.Serialize(studentsData);
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
-                }
-            }
+            var pagedResult = JsonSerializer.Deserialize<PagedResult<StudentDto>>(
+                content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+            var studentList = pagedResult?.Items ?? new List<StudentDto>();
 
             var parentStudentIds = studentList.Select(s => s.Id).ToHashSet();
             if (!parentStudentIds.Any()) return false;
