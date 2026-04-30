@@ -1,0 +1,61 @@
+@page
+@model SchoolSystem.Web.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Parent Portal Dashboard";
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Parent Portal Dashboard</h1>
+
+    @if (Model.Children.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">No children found</h4>
+            <p>You don't have any children linked to your account yet. Please contact the school administrator.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var child in Model.Children)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@child.StudentName</h5>
+                            <p class="card-text">
+                                <strong>Class:</strong> @child.ClassName<br />
+                                <strong>School Year:</strong> @child.SchoolYear<br />
+                                <strong>Latest Report:</strong> <em>@child.LatestReportSummary</em>
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white border-top">
+                            <a href="/Reports/@child.StudentId" class="btn btn-sm btn-primary">View Reports</a>
+                            <a href="/Feedback/@child.StudentId" class="btn btn-sm btn-secondary">Feedback</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-footer {
+        padding: 1rem;
+    }
+
+    .btn-sm {
+        margin-right: 0.25rem;
+    }
+</style>
