@@ -71,31 +71,29 @@ public class MonthlyModel : AuthenticatedPageModel
                 return NotFound();
             }
 
-            // 2. If reportId is not provided, fetch reports that include this student
+            // 2. Always populate available reports (lightweight — no entries loaded)
+            var allMonthlyReports = await _context.MonthlyReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId)
+                .Select(e => new { e.ReportId, e.Report.Month, e.Report.SchoolYear })
+                .Distinct()
+                .OrderByDescending(e => e.SchoolYear)
+                .ThenByDescending(e => e.Month)
+                .ToListAsync();
+
+            AvailableReports = allMonthlyReports.Select(r => new MonthlyReportDto
+            {
+                Id = r.ReportId,
+                Month = r.Month,
+                SchoolYear = r.SchoolYear
+            }).ToList();
+
             if (reportId == 0)
             {
-                var availableReports = await _context.MonthlyReports
-                    .AsNoTracking()
-                    .Include(mr => mr.Entries)
-                    .Where(mr => mr.Entries.Any(e => e.StudentId == studentId))
-                    .OrderByDescending(mr => mr.SchoolYear)
-                    .ThenByDescending(mr => mr.Month)
-                    .ToListAsync();
-
-                if (!availableReports.Any())
+                if (!AvailableReports.Any())
                 {
-                    ReportViewModel.ErrorMessage = "No monthly reports are available for this student's class.";
-                    return Page();
+                    ReportViewModel.ErrorMessage = "No monthly reports are available for this student.";
                 }
-
-                // Map to DTOs for display
-                AvailableReports = availableReports.Select(mr => new MonthlyReportDto
-                {
-                    Id = mr.Id,
-                    Month = mr.Month,
-                    SchoolYear = mr.SchoolYear
-                }).ToList();
-
                 return Page();
             }
 
@@ -146,6 +144,7 @@ public class MonthlyModel : AuthenticatedPageModel
 
             ReportViewModel = new MonthlyReportViewModel
             {
+                ReportId = reportId,
                 StudentName = student.Name,
                 ClassName = student.ClassName,
                 SchoolYear = report.SchoolYear.ToString(),
@@ -176,6 +175,7 @@ public class MonthlyModel : AuthenticatedPageModel
 
 public class MonthlyReportViewModel
 {
+    public int ReportId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public string SchoolYear { get; set; } = string.Empty;

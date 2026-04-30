@@ -1,0 +1,58 @@
+@page
+@model SchoolSystem.Web.Pages.Feedback.IndexModel
+@{
+    ViewData["Title"] = "My Feedbacks";
+}
+
+<div class="container mt-4">
+    <div class="page-header">
+        <h1>My Feedbacks</h1>
+        <div class="header-actions">
+            <a href="/Dashboard" class="btn-back">Back</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    @if (Model.Feedbacks.Count == 0 && string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <p class="text-muted mb-0">You haven't submitted any feedback yet.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Feedback List</h5>
+            </div>
+            <div class="card-body p-0">
+                @foreach (var feedback in Model.Feedbacks)
+                {
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">@feedback.ReportLabel</div>
+                            <div class="list-item-subtitle">
+                                @(feedback.Message.Length > 120 ? feedback.Message.Substring(0, 120) + "..." : feedback.Message)
+                            </div>
+                            <div class="list-item-meta">
+                                @feedback.SubmittedAt.ToString("dd MMM yyyy HH:mm")
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <a href="@feedback.ReportLink" class="btn-action">View Report</a>
+                            <a href="@feedback.HistoryLink" class="btn-action">View History</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

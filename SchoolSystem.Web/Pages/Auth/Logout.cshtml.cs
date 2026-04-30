@@ -7,6 +7,13 @@ namespace SchoolSystem.Web.Pages.Auth;
 
 public class LogoutModel : PageModel
 {
+    public async Task<IActionResult> OnGetAsync()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        Response.Cookies.Delete("ApiToken");
+        return RedirectToPage("/Auth/Login");
+    }
+
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

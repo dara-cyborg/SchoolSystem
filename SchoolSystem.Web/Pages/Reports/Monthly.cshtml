@@ -5,59 +5,74 @@
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Monthly Report</h2>
-        <a href="/Dashboard" class="btn btn-secondary">Back to Dashboard</a>
-    </div>
-
-    @if (Model.ShowReportSelection)
-    {
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Select a Monthly Report</h5>
-            </div>
-            <div class="list-group list-group-flush">
+    <div class="page-header">
+        <h1>Monthly Report</h1>
+        @if (Model.AvailableReports.Count > 1)
+        {
+            <select class="report-switcher" onchange="window.location.href=this.value">
                 @foreach (var r in Model.AvailableReports)
                 {
-                    <a class="list-group-item list-group-item-action"
-                       asp-page="/Reports/Monthly"
-                       asp-route-studentId="@Model.RequestedStudentId"
-                       asp-route-reportId="@r.Id">
-                        Month @r.Month / @r.SchoolYear
-                    </a>
+                    var url = $"/Reports/Monthly?studentId={Model.RequestedStudentId}&reportId={r.Id}";
+                    var label = $"Month {r.Month} / {r.SchoolYear}";
+                    if (r.Id == Model.ReportViewModel.ReportId)
+                    {
+                        <option value="@url" selected>@label</option>
+                    }
+                    else
+                    {
+                        <option value="@url">@label</option>
+                    }
                 }
-            </div>
+            </select>
+        }
+        <div class="header-actions">
+            @if (Model.ReportViewModel?.ReportId > 0)
+            {
+                <a asp-page="/Feedback/Submit" asp-route-reportType="monthly" asp-route-reportId="@Model.ReportViewModel.ReportId" class="btn-action">Submit Feedback</a>
+            }
+            <a href="/Dashboard" class="btn-back">Back</a>
         </div>
-    }
-    else if (!string.IsNullOrEmpty(Model.ReportViewModel.ErrorMessage))
+    </div>
+
+    @if (Model.ReportViewModel != null && !string.IsNullOrEmpty(Model.ReportViewModel.ErrorMessage))
     {
         <div class="alert alert-danger" role="alert">
             @Model.ReportViewModel.ErrorMessage
         </div>
     }
-    else
+    else if (Model.ReportViewModel != null)
     {
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Student Information</h5>
+        <div class="info-card">
+            <div class="info-header">
+                <h2>Student Information</h2>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3"><strong>Name:</strong> @Model.ReportViewModel.StudentName</div>
-                    <div class="col-md-3"><strong>Class:</strong> @Model.ReportViewModel.ClassName</div>
-                    <div class="col-md-3"><strong>School Year:</strong> @Model.ReportViewModel.SchoolYear</div>
-                    <div class="col-md-3"><strong>Month:</strong> @Model.ReportViewModel.Month</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Name</span>
+                    <span class="info-value">@Model.ReportViewModel.StudentName</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Class</span>
+                    <span class="info-value">@Model.ReportViewModel.ClassName</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">School Year</span>
+                    <span class="info-value">@Model.ReportViewModel.SchoolYear</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Month</span>
+                    <span class="info-value">@Model.ReportViewModel.Month</span>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Subject Scores</h5>
+        <div class="card">
+            <div class="card-header">
+                <h2>Subject Scores</h2>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-striped table-hover mb-0">
-                    <thead class="table-light">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
                         <tr>
                             <th>Subject</th>
                             <th>Score</th>
@@ -82,13 +97,13 @@
             </div>
         </div>
 
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Class Leaderboard</h5>
+        <div class="card">
+            <div class="card-header">
+                <h2>Class Leaderboard</h2>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-striped table-hover mb-0">
-                    <thead class="table-light">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
                         <tr>
                             <th>Student ID</th>
                             <th>Total Score</th>
@@ -98,10 +113,10 @@
                     <tbody>
                         @foreach (var entry in Model.ReportViewModel.Entries.OrderBy(e => e.Rank))
                         {
-                            <tr class="@(entry.StudentId == Model.ReportViewModel.StudentId ? "table-primary fw-bold" : "")">
+                            <tr class="@(entry.StudentId == Model.ReportViewModel.StudentId ? "current-student" : "")">
                                 <td>@entry.StudentId</td>
                                 <td>@entry.TotalScore</td>
-                                <td>@entry.Rank</td>
+                                <td>#@entry.Rank</td>
                             </tr>
                         }
                         @if (!Model.ReportViewModel.Entries.Any())
@@ -113,36 +128,307 @@
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer bg-light">
-                <div class="row text-center">
-                    <div class="col-md-6 border-end">
-                        <h6 class="text-muted mb-1">My Total Score</h6>
-                        <h4 class="mb-0 text-primary">@Model.ReportViewModel.TotalScore</h4>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-1">My Class Rank</h6>
-                        <h4 class="mb-0 text-success">#@Model.ReportViewModel.Rank</h4>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Attendance Summary</h5>
+        <div class="card">
+            <div class="card-header">
+                <h2>Stats</h2>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-6 border-end">
-                        <h6 class="text-muted mb-1">Informed Absences</h6>
-                        <h4 class="mb-0">@Model.ReportViewModel.InformedAbsences</h4>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-1">Uninformed Absences</h6>
-                        <h4 class="mb-0 text-danger">@Model.ReportViewModel.UninformedAbsences</h4>
-                    </div>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-label">Total Score</span>
+                    <span class="stat-value">@Model.ReportViewModel.TotalScore</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-label">Class Rank</span>
+                    <span class="stat-value">#@Model.ReportViewModel.Rank</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-label">Inf Absences</span>
+                    <span class="stat-value">@Model.ReportViewModel.InformedAbsences</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-label">Uni Absences</span>
+                    <span class="stat-value stat-danger">@Model.ReportViewModel.UninformedAbsences</span>
                 </div>
             </div>
         </div>
     }
 </div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+
+    .btn-action:hover {
+        background: var(--accent);
+        color: var(--white);
+    }
+
+    .btn-back {
+        padding: 0.5rem 1rem;
+        background: var(--light);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+
+    .btn-back:hover {
+        background: var(--border);
+    }
+
+    .report-switcher {
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--white);
+        color: var(--text);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .report-switcher:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1);
+    }
+
+    .card {
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary);
+    }
+
+    .list-group {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .list-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-item:hover {
+        background: var(--light);
+    }
+
+    .report-period {
+        font-weight: 500;
+    }
+
+    .arrow {
+        color: var(--text-muted);
+    }
+
+    .info-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .info-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        padding: 1.25rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: var(--light);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+    }
+
+    .table tbody td {
+        padding: 0.75rem 1rem;
+    }
+
+    .current-student {
+        background: var(--light);
+        font-weight: 600;
+    }
+
+    .stats-row {
+        display: flex;
+        justify-content: space-around;
+        padding: 1.25rem;
+        background: var(--lighter);
+        border-top: 1px solid var(--border);
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-value.stat-danger {
+        color: #c53030;
+    }
+
+    .stat-divider {
+        width: 1px;
+        background: var(--border);
+    }
+
+    @@media (max-width: 767.98px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .header-actions {
+            width: 100%;
+        }
+        
+        .btn-action, .btn-back {
+            flex: 1;
+            text-align: center;
+        }
+        
+        /* Keep stats-row horizontal on mobile */
+        .stats-row {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+        }
+
+        .stats-row .stat-item {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stats-row .stat-label {
+            font-size: 0.6rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stats-row .stat-value {
+            font-size: 1rem;
+        }
+
+        .stats-row .stat-divider {
+            width: 1px !important;
+            height: auto !important;
+            align-self: stretch;
+        }
+    }
+</style>

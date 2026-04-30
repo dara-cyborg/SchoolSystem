@@ -71,31 +71,29 @@ public class SemesterModel : AuthenticatedPageModel
                 return NotFound();
             }
 
-            // 2. If reportId is not provided, fetch reports that include this student
+            // 2. Always populate available reports (lightweight — no entries loaded)
+            var allSemesterReports = await _context.SemesterReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId)
+                .Select(e => new { e.ReportId, e.Report.Semester, e.Report.SchoolYear })
+                .Distinct()
+                .OrderByDescending(e => e.SchoolYear)
+                .ThenByDescending(e => e.Semester)
+                .ToListAsync();
+
+            AvailableReports = allSemesterReports.Select(r => new SemesterReportDto
+            {
+                Id = r.ReportId,
+                Semester = r.Semester,
+                SchoolYear = r.SchoolYear
+            }).ToList();
+
             if (reportId == 0)
             {
-                var availableReports = await _context.SemesterReports
-                    .AsNoTracking()
-                    .Include(sr => sr.Entries)
-                    .Where(sr => sr.Entries.Any(e => e.StudentId == studentId))
-                    .OrderByDescending(sr => sr.SchoolYear)
-                    .ThenByDescending(sr => sr.Semester)
-                    .ToListAsync();
-
-                if (!availableReports.Any())
+                if (!AvailableReports.Any())
                 {
-                    ReportViewModel.ErrorMessage = "No semester reports are available for this student's class.";
-                    return Page();
+                    ReportViewModel.ErrorMessage = "No semester reports are available for this student.";
                 }
-
-                // Map to DTOs for display
-                AvailableReports = availableReports.Select(sr => new SemesterReportDto
-                {
-                    Id = sr.Id,
-                    Semester = sr.Semester,
-                    SchoolYear = sr.SchoolYear
-                }).ToList();
-
                 return Page();
             }
 
@@ -147,6 +145,7 @@ public class SemesterModel : AuthenticatedPageModel
 
             ReportViewModel = new SemesterReportViewModel
             {
+                ReportId = reportId,
                 StudentName = student.Name,
                 ClassName = student.ClassName,
                 SchoolYear = report.SchoolYear.ToString(),
@@ -177,6 +176,7 @@ public class SemesterModel : AuthenticatedPageModel
 
 public class SemesterReportViewModel
 {
+    public int ReportId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public string SchoolYear { get; set; } = string.Empty;

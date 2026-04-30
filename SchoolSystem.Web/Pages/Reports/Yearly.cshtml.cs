@@ -71,29 +71,27 @@ public class YearlyModel : AuthenticatedPageModel
                 return NotFound();
             }
 
-            // 2. If reportId is not provided, fetch reports that include this student
+            // 2. Always populate available reports (lightweight — no entries loaded)
+            var allYearlyReports = await _context.YearlyReportEntries
+                .AsNoTracking()
+                .Where(e => e.StudentId == studentId)
+                .Select(e => new { e.ReportId, e.Report.SchoolYear })
+                .Distinct()
+                .OrderByDescending(e => e.SchoolYear)
+                .ToListAsync();
+
+            AvailableReports = allYearlyReports.Select(r => new YearlyReportDto
+            {
+                Id = r.ReportId,
+                SchoolYear = r.SchoolYear
+            }).ToList();
+
             if (reportId == 0)
             {
-                var availableReports = await _context.YearlyReports
-                    .AsNoTracking()
-                    .Include(yr => yr.Entries)
-                    .Where(yr => yr.Entries.Any(e => e.StudentId == studentId))
-                    .OrderByDescending(yr => yr.SchoolYear)
-                    .ToListAsync();
-
-                if (!availableReports.Any())
+                if (!AvailableReports.Any())
                 {
-                    ReportViewModel.ErrorMessage = "No yearly reports are available for this student's class.";
-                    return Page();
+                    ReportViewModel.ErrorMessage = "No yearly reports are available for this student.";
                 }
-
-                // Map to DTOs for display
-                AvailableReports = availableReports.Select(yr => new YearlyReportDto
-                {
-                    Id = yr.Id,
-                    SchoolYear = yr.SchoolYear
-                }).ToList();
-
                 return Page();
             }
 
@@ -145,6 +143,7 @@ public class YearlyModel : AuthenticatedPageModel
 
             ReportViewModel = new YearlyReportViewModel
             {
+                ReportId = reportId,
                 StudentName = student.Name,
                 ClassName = student.ClassName,
                 SchoolYear = report.SchoolYear.ToString(),
@@ -174,6 +173,7 @@ public class YearlyModel : AuthenticatedPageModel
 
 public class YearlyReportViewModel
 {
+    public int ReportId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public string SchoolYear { get; set; } = string.Empty;
