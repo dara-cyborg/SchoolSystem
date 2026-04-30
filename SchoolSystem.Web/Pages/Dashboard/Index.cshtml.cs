@@ -63,13 +63,13 @@ public class IndexModel : PageModel
                     {
                         var itemsJson = System.Text.Json.JsonSerializer.Serialize(studentsData.GetProperty("Items"));
                         studentList = System.Text.Json.JsonSerializer.Deserialize<List<StudentDto>>(itemsJson,
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
                     }
                     else
                     {
                         var listJson = System.Text.Json.JsonSerializer.Serialize(studentsData);
                         studentList = System.Text.Json.JsonSerializer.Deserialize<List<StudentDto>>(listJson,
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
                     }
                 }
                 catch (Exception ex)

@@ -55,12 +55,12 @@ public class SemesterModel : PageModel
                 if (studentsData.GetType().GetProperty("Items") != null)
                 {
                     var itemsJson = JsonSerializer.Serialize(studentsData.GetProperty("Items"));
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(itemsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(itemsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
                 }
                 else
                 {
                     var listJson = JsonSerializer.Serialize(studentsData);
-                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                    studentList = JsonSerializer.Deserialize<List<StudentDto>>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<StudentDto>();
                 }
             }
 
