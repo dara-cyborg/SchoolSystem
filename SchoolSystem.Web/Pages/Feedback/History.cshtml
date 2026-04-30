@@ -1,0 +1,75 @@
+@page
+@model SchoolSystem.Web.Pages.Feedback.HistoryModel
+@{
+    ViewData["Title"] = "Feedback History";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Feedback History</h2>
+        <div>
+            <a href="/Feedback/Submit?reportType=@Model.ReportType&reportId=@Model.ReportId" class="btn btn-primary me-2">Submit New Feedback</a>
+            <a href="/Dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    Showing feedback for: 
+                    <span class="text-capitalize text-primary">@Model.ReportType Report</span> 
+                    <span class="text-muted">(ID: @Model.ReportId)</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.FeedbackHistory.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var feedback in Model.FeedbackHistory)
+                        {
+                            <li class="list-group-item p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="text-muted small">
+                                        Submitted at: <strong>@feedback.SubmittedAt.ToString("g")</strong>
+                                    </div>
+                                    <div>
+                                        @if (feedback.IsRead)
+                                        {
+                                            <span class="badge bg-success">Read</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Unread</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-light border rounded mb-3">
+                                    <p class="mb-0" style="white-space: pre-wrap;">@feedback.Message</p>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <a href="@feedback.ReportLink" class="btn btn-sm btn-outline-info">View Related Report</a>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="p-5 text-center text-muted">
+                        <p class="mb-0">No feedback found for this report.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

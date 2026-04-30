@@ -1,0 +1,57 @@
+@page
+@model SchoolSystem.Web.Pages.Feedback.SubmitModel
+@{
+    ViewData["Title"] = "Submit Feedback";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Submit Feedback</h4>
+                    <a href="/Dashboard" class="btn btn-sm btn-light">Back to Dashboard</a>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="Input.ReportType" class="form-label">Report Type</label>
+                            <select asp-for="Input.ReportType" class="form-select" readonly style="pointer-events: none; background-color: #e9ecef;">
+                                <option value="monthly">Monthly</option>
+                                <option value="semester">Semester</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.ReportId" class="form-label">Report ID</label>
+                            <input asp-for="Input.ReportId" type="number" class="form-control" readonly style="background-color: #e9ecef;" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Message" class="form-label">Your Feedback</label>
+                            <textarea asp-for="Input.Message" class="form-control" rows="5" required placeholder="Enter your feedback, questions, or concerns here..."></textarea>
+                            <span asp-validation-for="Input.Message" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/Feedback/History?reportType=@Model.Input.ReportType&reportId=@Model.Input.ReportId" class="btn btn-outline-secondary">View History</a>
+                            <button type="submit" class="btn btn-success">Submit Feedback</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
