@@ -6,6 +6,7 @@ using SchoolSystem.Api.Data;
 using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.Feedback;
 using SchoolSystem.Core.DTOs.Student;
+using SchoolSystem.Web.Models.ViewModels;
 using SchoolSystem.Web.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -22,7 +23,7 @@ public class IndexModel : AuthenticatedPageModel
     public string ErrorMessage { get; set; } = string.Empty;
 
     public IndexModel(ApiHttpClientFactory apiClientFactory, ILogger<IndexModel> logger, AppDbContext context)
-        : base(apiClientFactory)
+        : base(apiClientFactory, logger)
     {
         _logger = logger;
         _context = context;
@@ -172,16 +173,4 @@ public class IndexModel : AuthenticatedPageModel
             return new();
         }
     }
-}
-
-public class AllFeedbackViewModel
-{
-    public string ReportType { get; set; } = string.Empty;
-    public int ReportId { get; set; }
-    public string ReportLabel { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public DateTime SubmittedAt { get; set; }
-    public int StudentId { get; set; }
-    public string ReportLink { get; set; } = string.Empty;
-    public string HistoryLink { get; set; } = string.Empty;
 }
