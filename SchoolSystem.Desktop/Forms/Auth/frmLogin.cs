@@ -1,13 +1,15 @@
 ﻿using SchoolSystem.Desktop.Services;
 
 namespace SchoolSystem.Desktop.Forms.Auth {
-    public partial class frmLogin : Form {
+    public partial class frmLogin : Form
+    {
         private readonly TextBox _txtName;
         private readonly TextBox _txtPassword;
         private readonly Button _btnLogin;
         private readonly Label _lblError;
 
-        public frmLogin() {
+        public frmLogin()
+        {
             InitializeComponent();
 
             _txtName = GetRequiredControl<TextBox>("txtName");
@@ -23,29 +25,35 @@ namespace SchoolSystem.Desktop.Forms.Auth {
             _txtPassword.TextChanged += Input_TextChanged;
         }
 
-        private async void btnLogin_Click(object? sender, EventArgs e) {
+        private async void btnLogin_Click(object? sender, EventArgs e)
+        {
             _lblError.Visible = false;
             _btnLogin.Enabled = false;
 
-            try {
+            try
+            {
                 await ApiClient.Instance.LoginAsync(_txtName.Text.Trim(), _txtPassword.Text);
                 DialogResult = DialogResult.OK;
                 Close();
             }
-            catch (InvalidOperationException ex) {
+            catch (InvalidOperationException ex)
+            {
                 _lblError.Text = ex.Message;
                 _lblError.Visible = true;
                 _btnLogin.Enabled = true;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 _lblError.Text = ex.Message;
                 _lblError.Visible = true;
                 _btnLogin.Enabled = true;
             }
         }
 
-        private void txtPassword_KeyDown(object? sender, KeyEventArgs e) {
-            if (e.KeyCode != Keys.Enter) {
+        private void txtPassword_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter)
+            {
                 return;
             }
 
@@ -54,14 +62,22 @@ namespace SchoolSystem.Desktop.Forms.Auth {
             btnLogin_Click(_btnLogin, EventArgs.Empty);
         }
 
-        private void Input_TextChanged(object? sender, EventArgs e) {
+        private void Input_TextChanged(object? sender, EventArgs e)
+        {
             _lblError.Text = string.Empty;
             _lblError.Visible = false;
         }
 
-        private TControl GetRequiredControl<TControl>(string controlName) where TControl : Control {
+        private void frmLogin_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private TControl GetRequiredControl<TControl>(string controlName) where TControl : Control
+        {
             var matches = Controls.Find(controlName, true);
-            if (matches.Length == 0 || matches[0] is not TControl control) {
+            if (matches.Length == 0 || matches[0] is not TControl control)
+            {
                 throw new InvalidOperationException($"Required control '{controlName}' was not found.");
             }
 
