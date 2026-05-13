@@ -22,11 +22,192 @@
         /// Required method for Designer support - do not modify 
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent() {
-            components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+        private void InitializeComponent()
+        {
+            label1 = new Label();
+            label2 = new Label();
+            cboClassSubject = new ComboBox();
+            label3 = new Label();
+            txtEntryLabel = new TextBox();
+            label4 = new Label();
+            nudEntryScore = new NumericUpDown();
+            nudEntryMaxScore = new NumericUpDown();
+            label6 = new Label();
+            dgvGradebook = new DataGridView();
+            btnAddEntry = new Button();
+            btnEditEntry = new Button();
+            btnDeleteEntry = new Button();
+            ((System.ComponentModel.ISupportInitialize)nudEntryScore).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudEntryMaxScore).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvGradebook).BeginInit();
+            SuspendLayout();
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(17, 25);
+            label1.Name = "label1";
+            label1.Size = new Size(87, 20);
+            label1.TabIndex = 0;
+            label1.Text = "Grade Book";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(17, 71);
+            label2.Name = "label2";
+            label2.Size = new Size(104, 20);
+            label2.TabIndex = 1;
+            label2.Text = "Class/Subject :";
+            // 
+            // cboClassSubject
+            // 
+            cboClassSubject.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboClassSubject.FormattingEnabled = true;
+            cboClassSubject.Location = new Point(127, 69);
+            cboClassSubject.Name = "cboClassSubject";
+            cboClassSubject.Size = new Size(151, 28);
+            cboClassSubject.TabIndex = 2;
+            cboClassSubject.SelectedIndexChanged += cboClassSubject_SelectedIndexChanged;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(346, 46);
+            label3.Name = "label3";
+            label3.Size = new Size(90, 20);
+            label3.TabIndex = 3;
+            label3.Text = "Entity Label ";
+            // 
+            // txtEntryLabel
+            // 
+            txtEntryLabel.Location = new Point(330, 69);
+            txtEntryLabel.Name = "txtEntryLabel";
+            txtEntryLabel.Size = new Size(133, 27);
+            txtEntryLabel.TabIndex = 4;
+            txtEntryLabel.TextChanged += txtEntryLabel_TextChanged;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(527, 46);
+            label4.Name = "label4";
+            label4.Size = new Size(46, 20);
+            label4.TabIndex = 5;
+            label4.Text = "Score";
+            // 
+            // nudEntryScore
+            // 
+            nudEntryScore.DecimalPlaces = 2;
+            nudEntryScore.Location = new Point(484, 69);
+            nudEntryScore.Name = "nudEntryScore";
+            nudEntryScore.Size = new Size(150, 27);
+            nudEntryScore.TabIndex = 6;
+            nudEntryScore.ValueChanged += nudEntryScore_ValueChanged;
+            // 
+            // nudEntryMaxScore
+            // 
+            nudEntryMaxScore.Location = new Point(651, 69);
+            nudEntryMaxScore.Name = "nudEntryMaxScore";
+            nudEntryMaxScore.Size = new Size(150, 27);
+            nudEntryMaxScore.TabIndex = 7;
+            nudEntryMaxScore.ValueChanged += nudEntryMaxScore_ValueChanged;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(689, 46);
+            label6.Name = "label6";
+            label6.Size = new Size(78, 20);
+            label6.TabIndex = 9;
+            label6.Text = "Max Score";
+            // 
+            // dgvGradebook
+            // 
+            dgvGradebook.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvGradebook.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvGradebook.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvGradebook.Location = new Point(17, 113);
+            dgvGradebook.Name = "dgvGradebook";
+            dgvGradebook.RowHeadersWidth = 51;
+            dgvGradebook.Size = new Size(784, 264);
+            dgvGradebook.TabIndex = 10;
+            dgvGradebook.CellContentClick += dgvGradebook_CellContentClick;
+            // 
+            // btnAddEntry
+            // 
+            btnAddEntry.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnAddEntry.Location = new Point(138, 394);
+            btnAddEntry.Name = "btnAddEntry";
+            btnAddEntry.Size = new Size(114, 42);
+            btnAddEntry.TabIndex = 11;
+            btnAddEntry.Text = "Add Entity";
+            btnAddEntry.UseVisualStyleBackColor = true;
+            btnAddEntry.Click += btnAddEntry_Click;
+            // 
+            // btnEditEntry
+            // 
+            btnEditEntry.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnEditEntry.Location = new Point(17, 394);
+            btnEditEntry.Name = "btnEditEntry";
+            btnEditEntry.Size = new Size(115, 42);
+            btnEditEntry.TabIndex = 12;
+            btnEditEntry.Text = "Edit Entity";
+            btnEditEntry.UseVisualStyleBackColor = true;
+            btnEditEntry.Click += btnEditEntry_Click;
+            // 
+            // btnDeleteEntry
+            // 
+            btnDeleteEntry.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnDeleteEntry.Location = new Point(258, 394);
+            btnDeleteEntry.Name = "btnDeleteEntry";
+            btnDeleteEntry.Size = new Size(113, 42);
+            btnDeleteEntry.TabIndex = 13;
+            btnDeleteEntry.Text = "Delete Entity";
+            btnDeleteEntry.UseVisualStyleBackColor = true;
+            btnDeleteEntry.Click += btnDeleteEntry_Click;
+            // 
+            // ucGradebook
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(btnDeleteEntry);
+            Controls.Add(btnEditEntry);
+            Controls.Add(btnAddEntry);
+            Controls.Add(dgvGradebook);
+            Controls.Add(label6);
+            Controls.Add(nudEntryMaxScore);
+            Controls.Add(nudEntryScore);
+            Controls.Add(label4);
+            Controls.Add(txtEntryLabel);
+            Controls.Add(label3);
+            Controls.Add(cboClassSubject);
+            Controls.Add(label2);
+            Controls.Add(label1);
+            Name = "ucGradebook";
+            Size = new Size(821, 471);
+            Load += ucGradebook_Load;
+            ((System.ComponentModel.ISupportInitialize)nudEntryScore).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudEntryMaxScore).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvGradebook).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private Label label1;
+        private Label label2;
+        private ComboBox cboClassSubject;
+        private Label label3;
+        private TextBox txtEntryLabel;
+        private Label label4;
+        private NumericUpDown nudEntryScore;
+        private NumericUpDown nudEntryMaxScore;
+        private Label label6;
+        private DataGridView dgvGradebook;
+        private Button btnAddEntry;
+        private Button btnEditEntry;
+        private Button btnDeleteEntry;
     }
 }
