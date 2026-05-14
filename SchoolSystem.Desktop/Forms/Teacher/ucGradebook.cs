@@ -169,21 +169,24 @@ namespace SchoolSystem.Desktop.Forms.Teacher
             {
                 var result = await ApiClient.Instance.GetAsync<List<ClassSubjectWithStudentsDto>>("/api/teachers/my-class-subjects");
 
+                if (result == null)
+                {
+                    MessageBox.Show("API returned NULL");
+                    return;
+                }
+
+                MessageBox.Show($"Loaded {result.Count} class subjects");
+
                 _classSubjects = result;
 
                 cboClassSubject.DataSource = null;
                 cboClassSubject.DisplayMember = "SubjectName";
                 cboClassSubject.ValueMember = "Id";
                 cboClassSubject.DataSource = _classSubjects;
-
-                if (cboClassSubject.Items.Count > 0)
-                {
-                    cboClassSubject.SelectedIndex = 0;
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Load class subjects failed: {ex.Message}");
+                MessageBox.Show(ex.ToString());
             }
         }
         private async void cboClassSubject_SelectedIndexChanged(object sender, EventArgs e)

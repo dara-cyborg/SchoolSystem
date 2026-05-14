@@ -68,7 +68,7 @@
             // 
             txtContact.Location = new Point(22, 111);
             txtContact.Name = "txtContact";
-            txtContact.PlaceholderText = "Enter Phone Number";
+            txtContact.PlaceholderText = "Enter Email Contact";
             txtContact.Size = new Size(451, 27);
             txtContact.TabIndex = 3;
             // 
