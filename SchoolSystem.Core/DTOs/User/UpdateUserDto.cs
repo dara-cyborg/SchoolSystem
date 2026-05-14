@@ -8,4 +8,5 @@ public class UpdateUserDto {
     public DateTime? Dob { get; set; }
     public string? Contact { get; set; }
     public bool IsActive { get; set; }
+
 }

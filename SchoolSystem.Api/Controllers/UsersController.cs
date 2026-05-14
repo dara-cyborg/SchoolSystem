@@ -20,7 +20,7 @@ public class UsersController : ControllerBase {
     /// Get paginated list of users with their roles
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) {
+    public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) {
         if (page < 1 || pageSize < 1) {
             return BadRequest(new { message = "Page and PageSize must be greater than 0" });
         }
@@ -33,7 +33,7 @@ public class UsersController : ControllerBase {
     /// Get a specific user by ID with their roles
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id, CancellationToken cancellationToken = default) {
+    public async Task<IActionResult> GetUser(string? search,int id, CancellationToken cancellationToken = default) {
         var user = await _userService.GetUserByIdAsync(id, cancellationToken);
 
         if (user == null) {
