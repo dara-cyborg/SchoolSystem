@@ -72,7 +72,7 @@ public class LoginModel : PageModel
                     HttpOnly = true,
                     Secure = false,
                     SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-                    Expires = DateTimeOffset.UtcNow.AddHours(8)
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
                 };
                 Response.Cookies.Append("ApiToken", apiToken ?? "", cookieOptions);
 
