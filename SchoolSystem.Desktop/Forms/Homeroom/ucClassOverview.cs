@@ -95,22 +95,6 @@ public partial class ucClassOverview : UserControl
         dgvStudents.ReadOnly = true;
         dgvStudents.AllowUserToAddRows = false;
     }
-    //private async Task LoadStudents()
-    //{
-    //    try
-    //    {
-    //        dgvStudents.AutoGenerateColumns = true;
-
-    //        var students = await ApiClient.Instance
-    //            .GetAsync<List<StudentDto>>("/api/students");
-
-    //        dgvStudents.DataSource = students;
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        MessageBox.Show(ex.Message);
-    //    }
-    //}
 
     private async void cboClass_SelectedIndexChanged(object sender, EventArgs e)
     {

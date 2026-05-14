@@ -9,115 +9,28 @@ using SchoolSystem.Core.DTOs.ClassSubject;
 using SchoolSystem.Core.Enums;
 using SchoolSystem.Desktop.Services;
 
-
-
 namespace SchoolSystem.Desktop.Forms.Teacher
 {
     public partial class ucAttendance : UserControl
     {
         private List<ClassSubjectWithStudentsDto> _classSubjects = new();
+
         public ucAttendance()
         {
             InitializeComponent();
         }
 
-        private void dgvAttendance_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (dgvAttendance.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
-            {
-                string status = e.Value.ToString();
-                var row = dgvAttendance.Rows[e.RowIndex];
-
-                row.DefaultCellStyle.BackColor = Color.White;
-
-                if (status == AttendanceStatus.Present.ToString())
-                    row.DefaultCellStyle.BackColor = Color.LightGreen;
-
-                else if (status == AttendanceStatus.InformedAbsent.ToString())
-                    row.DefaultCellStyle.BackColor = Color.Khaki;
-
-                else if (status == AttendanceStatus.UninformedAbsent.ToString())
-                    row.DefaultCellStyle.BackColor = Color.LightCoral;
-            }
-        }
-
-        private void btnBulkSubmit_Click(object sender, EventArgs e)
-        {
-            foreach (DataGridViewRow row in dgvAttendance.Rows)
-            {
-                if (!row.IsNewRow)
-                {
-                    row.Cells["Status"].Value = AttendanceStatus.Present.ToString();
-                }
-            }
-
-            dgvAttendance.Refresh();
-        }
-
-        private async void btnSubmitAttendance_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (cboClassSubject.SelectedValue == null)
-                {
-                    MessageBox.Show("Please select class subject.");
-                    return;
-                }
-
-                int classSubjectId = Convert.ToInt32(cboClassSubject.SelectedValue);
-
-                BulkAttendanceDto bulkDto = new BulkAttendanceDto();
-
-                foreach (DataGridViewRow row in dgvAttendance.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    if (row.Cells["StudentId"].Value == null) continue;
-
-                    int studentId = Convert.ToInt32(row.Cells["StudentId"].Value);
-
-                    if (!Enum.TryParse(
-                        row.Cells["Status"].Value?.ToString(),
-                        out AttendanceStatus status))
-                    {
-                        continue;
-                    }
-
-                    bulkDto.Records.Add(new CreateAttendanceDto
-                    {
-                        StudentId = studentId,
-                        ClassSubjectId = classSubjectId,
-                        Date = dtpDate.Value.Date,
-                        Status = status
-                    });
-                }
-
-                if (bulkDto.Records.Count == 0)
-                {
-                    MessageBox.Show("No records.");
-                    return;
-                }
-
-                await ApiClient.Instance.PostAsync<object>(
-                    "/api/attendance/bulk",
-                    bulkDto);
-
-                MessageBox.Show("Attendance saved.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Submit failed:\n" + ex.Message);
-            }
-        }
-
         private async void ucAttendance_Load(object sender, EventArgs e)
         {
-            await LoadClassSubjectsAsync();
             SetupGrid();
-            if (cboClassSubject.Items.Count > 0)
+            dtpDate.Value = DateTime.Today;
+
+            await LoadClassSubjectsAsync();
+
+            // force trigger AFTER binding is ready
+            if (cboClassSubject.SelectedItem is ComboItem item)
             {
-                cboClassSubject.SelectedIndex = 0;
-                LoadStudentsToGrid();
+                LoadStudentsToGrid(item.Id);
             }
         }
 
@@ -125,34 +38,43 @@ namespace SchoolSystem.Desktop.Forms.Teacher
         {
             try
             {
-                cboClassSubject.DisplayMember = "DisplayText";
-                cboClassSubject.ValueMember = "Id";
-
                 var result = await ApiClient.Instance
                     .GetAsync<List<ClassSubjectWithStudentsDto>>("/api/teachers/my-classsubjects");
 
-                if (result == null)
+                if (result == null || result.Count == 0)
+                {
+                    MessageBox.Show("No class subjects found.");
                     return;
+                }
 
                 _classSubjects = result;
 
-                var items = _classSubjects.Select(x => new
+                var comboData = _classSubjects.Select(x => new ComboItem
                 {
-                    x.Id,
+                    Id = x.Id,
                     DisplayText = $"{x.ClassName} - {x.SubjectName}"
                 }).ToList();
 
-                cboClassSubject.DataSource = items;
+                cboClassSubject.DisplayMember = nameof(ComboItem.DisplayText);
+                cboClassSubject.ValueMember = nameof(ComboItem.Id);
+                cboClassSubject.DataSource = comboData;
+
+                cboClassSubject.DropDownStyle = ComboBoxStyle.DropDownList;
+
+                if (comboData.Count > 0)
+                    cboClassSubject.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Load subjects failed: " + ex.Message);
+                MessageBox.Show("Load subjects failed:\n" + ex.Message);
             }
         }
+
         private void SetupGrid()
         {
-            dgvAttendance.AutoGenerateColumns = false;
             dgvAttendance.Columns.Clear();
+            dgvAttendance.AutoGenerateColumns = false;
+            dgvAttendance.AllowUserToAddRows = false;
 
             dgvAttendance.Columns.Add(new DataGridViewTextBoxColumn
             {
@@ -181,32 +103,31 @@ namespace SchoolSystem.Desktop.Forms.Teacher
             {
                 Name = "Status",
                 HeaderText = "Status",
-                Width = 180
+                Width = 180,
+                FlatStyle = FlatStyle.Flat
             };
 
             statusColumn.Items.AddRange(Enum.GetNames(typeof(AttendanceStatus)));
             dgvAttendance.Columns.Add(statusColumn);
         }
 
-       
-        private void cboClass_SelectedIndexChanged(object sender, EventArgs e)
+        private void cboClassSubject_SelectedIndexChanged(object sender, EventArgs e)
         {
-            LoadStudentsToGrid();
+            if (cboClassSubject.SelectedItem is not ComboItem item)
+                return;
+
+            LoadStudentsToGrid(item.Id);
         }
-        private void LoadStudentsToGrid()
+
+        private void LoadStudentsToGrid(int classSubjectId)
         {
             try
             {
                 dgvAttendance.Rows.Clear();
 
-                if (cboClassSubject.SelectedValue == null)
-                    return;
-
-                int classSubjectId = Convert.ToInt32(cboClassSubject.SelectedValue);
-
                 var selected = _classSubjects.FirstOrDefault(x => x.Id == classSubjectId);
 
-                if (selected == null)
+                if (selected?.Students == null)
                     return;
 
                 foreach (var student in selected.Students)
@@ -214,26 +135,114 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                     dgvAttendance.Rows.Add(
                         student.Id,
                         student.Name,
-                        student.Sex,
+                        student.Sex.ToString(),
                         AttendanceStatus.Present.ToString()
                     );
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                MessageBox.Show("Load students failed:\n" + ex.Message);
             }
         }
-        private void cboClassSubject_SelectedIndexChanged(object sender, EventArgs e)
+        private void btnBulkSubmit_Click(object sender, EventArgs e)
         {
-            LoadStudentsToGrid();
+            foreach (DataGridViewRow row in dgvAttendance.Rows)
+            {
+                if (!row.IsNewRow)
+                {
+                    row.Cells["Status"].Value = AttendanceStatus.Present.ToString();
+                }
+            }
+        }
+
+        private async void btnSubmitAttendance_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // CRITICAL: Commit any pending changes in the grid
+                dgvAttendance.EndEdit();
+
+                if (cboClassSubject.SelectedValue == null || !int.TryParse(cboClassSubject.SelectedValue.ToString(), out int classSubjectId))
+                {
+                    MessageBox.Show("Please select a class subject first.");
+                    return;
+                }
+
+                BulkAttendanceDto bulkDto = new BulkAttendanceDto();
+
+                foreach (DataGridViewRow row in dgvAttendance.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    // Safely extract StudentId
+                    if (row.Cells["StudentId"].Value == null) continue;
+                    int studentId = Convert.ToInt32(row.Cells["StudentId"].Value);
+
+                    // Safely extract and parse Status
+                    string statusStr = row.Cells["Status"].Value?.ToString();
+                    if (string.IsNullOrEmpty(statusStr) || !Enum.TryParse(statusStr, out AttendanceStatus status))
+                    {
+                        continue;
+                    }
+
+                    bulkDto.Records.Add(new CreateAttendanceDto
+                    {
+                        StudentId = studentId,
+                        ClassSubjectId = classSubjectId,
+                        Date = dtpDate.Value.Date,
+                        Status = status
+                    });
+                }
+
+                if (bulkDto.Records.Count == 0)
+                {
+                    MessageBox.Show("No attendance data found in the list to submit.");
+                    return;
+                }
+
+                await ApiClient.Instance.PostAsync<object>("/api/attendance/bulk", bulkDto);
+
+                MessageBox.Show("Attendance submitted successfully!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Submit failed:\n" + ex.Message);
+            }
+        }
+
+        private void dgvAttendance_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            if (dgvAttendance.Columns[e.ColumnIndex].Name == "Status")
+            {
+                var value = e.Value?.ToString();
+
+                if (value == AttendanceStatus.Present.ToString())
+                    e.CellStyle.BackColor = Color.LightGreen;
+                else if (value == AttendanceStatus.InformedAbsent.ToString())
+                    e.CellStyle.BackColor = Color.Khaki;
+                else if (value == AttendanceStatus.UninformedAbsent.ToString())
+                    e.CellStyle.BackColor = Color.LightCoral;
+            }
         }
 
         private void dtpDate_ValueChanged(object sender, EventArgs e)
         {
-
         }
 
         private void dgvAttendance_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+        }
+
+        public class ComboItem
+        {
+            public int Id { get; set; }
+            public string DisplayText { get; set; } = string.Empty;
+        }
+
+        private void cboClass_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }

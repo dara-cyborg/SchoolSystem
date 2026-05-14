@@ -15,31 +15,47 @@ public class UserService : IUserService {
         _context = context;
     }
 
-    public async Task<PagedResult<UserDto>> GetUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default) {
-        // Validate and cap pageSize
+    public async Task<PagedResult<UserDto>> GetUsersAsync(
+       int page,
+       int pageSize,
+       string? search = null,
+       CancellationToken cancellationToken = default)
+    {
         if (pageSize < 1) pageSize = 1;
         if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var query = _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
-            .OrderBy(u => u.Id)
             .AsQueryable();
 
+        // Search filter
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim().ToLower();
+
+            query = query.Where(u =>
+                u.Name.ToLower().Contains(search) ||
+                u.Contact.ToLower().Contains(search));
+        }
+
+        query = query.OrderBy(u => u.Id);
+
         var totalCount = await query.CountAsync(cancellationToken);
+
         var users = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PagedResult<UserDto> {
+        return new PagedResult<UserDto>
+        {
             Items = users.Select(u => MapUserToDto(u)).ToList(),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         };
     }
-
     public async Task<UserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default) {
         var user = await _context.Users
             .Include(u => u.UserRoles)
