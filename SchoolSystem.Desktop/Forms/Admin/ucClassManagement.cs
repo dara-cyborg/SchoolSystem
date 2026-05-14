@@ -152,3 +152,4 @@ namespace SchoolSystem.Desktop.Forms.Admin
         private void dgvClasses_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
     }
 }
+ 

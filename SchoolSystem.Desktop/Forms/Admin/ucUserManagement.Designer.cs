@@ -35,6 +35,7 @@
             btnEditUser = new Button();
             btnAddUser = new Button();
             tmrSearch = new System.Windows.Forms.Timer(components);
+            btnSearch = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvUsers).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bsUsers).BeginInit();
             pnlToolbar.SuspendLayout();
@@ -64,6 +65,7 @@
             // pnlToolbar
             // 
             pnlToolbar.BorderStyle = BorderStyle.FixedSingle;
+            pnlToolbar.Controls.Add(btnSearch);
             pnlToolbar.Controls.Add(txtSearch);
             pnlToolbar.Controls.Add(btnRefreshUsers);
             pnlToolbar.Controls.Add(btnDeleteUser);
@@ -127,6 +129,16 @@
             // 
             tmrSearch.Tick += SearchTimer_Tick;
             // 
+            // btnSearch
+            // 
+            btnSearch.Location = new Point(528, 63);
+            btnSearch.Name = "btnSearch";
+            btnSearch.Size = new Size(112, 29);
+            btnSearch.TabIndex = 5;
+            btnSearch.Text = "Search";
+            btnSearch.UseVisualStyleBackColor = true;
+            btnSearch.Click += btnSearch_Click;
+            // 
             // ucUserManagement
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -157,5 +169,6 @@
         private Button btnRefreshUsers;
         private Button btnDeleteUser;
         private System.Windows.Forms.Timer tmrSearch;
+        private Button btnSearch;
     }
 }
