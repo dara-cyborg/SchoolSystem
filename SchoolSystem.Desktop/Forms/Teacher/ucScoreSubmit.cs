@@ -14,8 +14,7 @@ namespace SchoolSystem.Desktop.Forms.Teacher
 {
     public partial class ucScoreSubmit : UserControl
     {
-        private List<ClassSubjectResponseDto> _classSubjects = new();
-        private List<StudentDto> _students = new();
+        private List<ClassSubjectWithStudentsDto> _classSubjects = new();
 
         public ucScoreSubmit()
         {
@@ -62,11 +61,10 @@ namespace SchoolSystem.Desktop.Forms.Teacher
 
         private async Task LoadClassSubjectsAsync()
         {
-
             try
             {
-                var result = await ApiClient.Instance.GetAsync<PagedResult<ClassSubjectResponseDto>>(
-                    "/api/academics/class-subjects?page=1&pageSize=100");
+                var result = await ApiClient.Instance.GetAsync<List<ClassSubjectWithStudentsDto>>(
+                    "/api/teachers/my-class-subjects");
 
                 if (result == null)
                 {
@@ -74,21 +72,21 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                     return;
                 }
 
-                if (result.Items == null || result.Items.Count == 0)
+                if (result.Count == 0)
                 {
                     MessageBox.Show("No class subjects found.");
                     cboClassSubject.DataSource = null;
                     return;
                 }
 
-                _classSubjects = result.Items;
+                _classSubjects = result;
 
                 cboClassSubject.DataSource = null;
                 cboClassSubject.DisplayMember = "";
                 cboClassSubject.ValueMember = "";
 
                 cboClassSubject.DataSource = _classSubjects;
-                cboClassSubject.DisplayMember = "SubjectName";
+                cboClassSubject.DisplayMember = "DisplayName";
                 cboClassSubject.ValueMember = "Id";
             }
             catch (Exception ex)
@@ -99,37 +97,22 @@ namespace SchoolSystem.Desktop.Forms.Teacher
 
         private async void cboClassSubject_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cboClassSubject.SelectedItem is not ClassSubjectResponseDto selected)
+            if (cboClassSubject.SelectedItem is not ClassSubjectWithStudentsDto selected)
                 return;
 
-            await LoadStudentsAsync(selected.ClassId);
-        }
+            dgvScores.Rows.Clear();
 
-        private async Task LoadStudentsAsync(int classId)
-        {
-            try
+            foreach (var student in selected.Students)
             {
-                _students = await ApiClient.Instance.GetAsync<List<StudentDto>>(
-                    $"/api/academics/classes/{classId}/students");
-
-                dgvScores.Rows.Clear();
-
-                foreach (var student in _students)
-                {
-                    dgvScores.Rows.Add(
-                        student.Id,
-                        student.Name,
-                        "",
-                        false
-                    );
-                }
-
-                await LoadExistingScoresAsync();
+                dgvScores.Rows.Add(
+                    student.Id,
+                    student.Name,
+                    "",
+                    false
+                );
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Load students failed:\n{ex.Message}");
-            }
+
+            await LoadExistingScoresAsync();
         }
 
         private async Task LoadExistingScoresAsync()
@@ -144,7 +127,10 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                 short year = (short)nudYear.Value;
 
                 var scores = await ApiClient.Instance.GetAsync<List<MonthlyScoreResponseDto>>(
-                    $"/api/scores/monthly/class-subject/{classSubjectId}?month={month}&schoolYear={year}");
+                    $"/api/monthly-scores/class-subject/{classSubjectId}?month={month}&schoolYear={year}");
+
+                if (scores == null)
+                    return;
 
                 foreach (DataGridViewRow row in dgvScores.Rows)
                 {
@@ -168,8 +154,9 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
 
@@ -230,7 +217,7 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                     };
 
                     await ApiClient.Instance.PostAsync<MonthlyScoreResponseDto>(
-                        "/api/scores/monthly", dto);
+                        "/api/monthly-scores/submit", dto);
 
                     row.Cells["colLocked"].Value = true;
                     row.ReadOnly = true;

@@ -5,14 +5,17 @@ using SchoolSystem.Core.Interfaces;
 
 namespace SchoolSystem.Api.Services;
 
-public class TeacherService : ITeacherService {
+public class TeacherService : ITeacherService
+{
     private readonly AppDbContext _context;
 
-    public TeacherService(AppDbContext context) {
+    public TeacherService(AppDbContext context)
+    {
         _context = context;
     }
 
-    public async Task<List<ClassSubjectWithStudentsDto>> GetMyClassSubjectsAsync(int teacherUserId) {
+    public async Task<List<ClassSubjectWithStudentsDto>> GetMyClassSubjectsAsync(int teacherUserId)
+    {
         var classSubjects = await _context.ClassSubjects
             .AsNoTracking()
             .Include(cs => cs.Class)
@@ -23,7 +26,8 @@ public class TeacherService : ITeacherService {
             .OrderBy(cs => cs.Id)
             .ToListAsync();
 
-        return classSubjects.Select(cs => new ClassSubjectWithStudentsDto {
+        return classSubjects.Select(cs => new ClassSubjectWithStudentsDto
+        {
             Id = cs.Id,
             ClassId = cs.ClassId,
             ClassName = cs.Class.Name,
@@ -34,7 +38,8 @@ public class TeacherService : ITeacherService {
             Students = cs.Class.Students
                 .Where(student => student.ClassId == cs.ClassId)
                 .OrderBy(student => student.Id)
-                .Select(student => new StudentInClassDto {
+                .Select(student => new StudentInClassDto
+                {
                     Id = student.Id,
                     Name = student.Name,
                     Sex = student.Sex.ToString()
