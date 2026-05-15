@@ -30,6 +30,7 @@ public class ClassSubjectWithStudentsDto {
     public int? TeacherUserId { get; set; }
     public string? TeacherName { get; set; }
     public List<StudentInClassDto> Students { get; set; } = new();
+    public string DisplayName => $"{ClassName} - {SubjectName}";
 }
 
 public class StudentInClassDto {
