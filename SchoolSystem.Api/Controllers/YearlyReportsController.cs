@@ -9,7 +9,7 @@ using SchoolSystem.Core.Interfaces;
 namespace SchoolSystem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/yearly-reports")]
 public class YearlyReportsController : ControllerBase {
     private readonly IYearlyReportService _yearlyReportService;
     private readonly AppDbContext _context;

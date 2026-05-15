@@ -809,6 +809,44 @@ Possible errors:
 - `401 Unauthorized` if the JWT is missing or invalid.
 - `403 Forbidden` if the caller is not `super_admin`.
 
+## Teachers
+
+### GET /api/teachers/my-class-subjects
+
+| Item | Details |
+| --- | --- |
+| Roles | `teacher` |
+| Description | Returns all class-subject assignments for the calling teacher. Each item includes the roster of students in that class. |
+
+Response body shape:
+
+```json
+[
+  {
+    "id": 1,
+    "classId": 2,
+    "className": "Grade 7A",
+    "subjectId": 3,
+    "subjectName": "Mathematics",
+    "teacherUserId": 15,
+    "teacherName": "Jane Doe",
+    "students": [
+      {
+        "id": 101,
+        "name": "Student One",
+        "sex": "Male"
+      }
+    ]
+  }
+]
+```
+
+Possible errors:
+
+- `200 OK` with an empty list if the teacher has no assigned class-subjects.
+- `401 Unauthorized` if the JWT is missing or invalid.
+- `403 Forbidden` if the caller is not a teacher.
+
 ## Students
 
 ### GET /api/students

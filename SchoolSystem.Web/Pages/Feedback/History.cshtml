@@ -1,0 +1,220 @@
+@page
+@model SchoolSystem.Web.Pages.Feedback.HistoryModel
+@{
+    ViewData["Title"] = "Feedback History";
+}
+
+<div class="container mt-4">
+    <div class="page-header">
+        <h1>Feedback History</h1>
+        <div class="header-actions">
+            <a href="/Feedback/Submit?reportType=@Model.ReportType&reportId=@Model.ReportId" class="btn-action">Submit New</a>
+            <a href="/Dashboard" class="btn-back">Back</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <span class="text-capitalize">@Model.ReportType</span> Report 
+                    <span class="text-muted">#@Model.ReportId</span>
+                </h2>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.FeedbackHistory.Any())
+                {
+                    <div class="feedback-list">
+                        @foreach (var feedback in Model.FeedbackHistory)
+                        {
+                            <div class="feedback-item">
+                                <div class="feedback-meta">
+                                    <span class="feedback-date">@feedback.SubmittedAt.ToString("g")</span>
+                                    @if (feedback.IsRead)
+                                    {
+                                        <span class="badge bg-success">Read</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unread</span>
+                                    }
+                                </div>
+                                <div class="feedback-message">
+                                    <p style="white-space: pre-wrap;">@feedback.Message</p>
+                                </div>
+                                <div class="feedback-actions">
+                                    <a href="@feedback.ReportLink" class="link-btn">View Report</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>No feedback found for this report.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+
+    .btn-action:hover {
+        background: var(--accent);
+        color: var(--white);
+    }
+
+    .btn-back {
+        padding: 0.5rem 1rem;
+        background: var(--light);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+
+    .btn-back:hover {
+        background: var(--border);
+    }
+
+    .card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary);
+    }
+
+    .feedback-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .feedback-item {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .feedback-item:last-child {
+        border-bottom: none;
+    }
+
+    .feedback-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .feedback-date {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .feedback-message {
+        padding: 1rem;
+        background: var(--light);
+        border-radius: var(--radius-sm);
+        margin-bottom: 1rem;
+    }
+
+    .feedback-message p {
+        margin: 0;
+        color: var(--text);
+    }
+
+    .feedback-actions {
+        text-align: right;
+    }
+
+    .link-btn {
+        color: var(--secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .link-btn:hover {
+        color: var(--primary);
+    }
+
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    @@media (max-width: 767.98px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .header-actions {
+            width: 100%;
+        }
+        
+        .btn-action, .btn-back {
+            flex: 1;
+            text-align: center;
+        }
+    }
+</style>
