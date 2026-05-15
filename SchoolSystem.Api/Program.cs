@@ -91,6 +91,7 @@ builder.Services.AddScoped<IAcademicService, AcademicService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IGradebookService, GradebookService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IMonthlyScoreService, MonthlyScoreService>();
 builder.Services.AddScoped<IMonthlyReportService, MonthlyReportService>();
 builder.Services.AddScoped<ISemesterReportService, SemesterReportService>();
