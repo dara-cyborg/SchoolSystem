@@ -10,29 +10,36 @@ using SchoolSystem.Core.Models;
 
 namespace SchoolSystem.Api.Services;
 
-public class AuthService : IAuthService {
+public class AuthService : IAuthService
+{
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
 
-    public AuthService(AppDbContext context, IConfiguration configuration) {
+    public AuthService(AppDbContext context, IConfiguration configuration)
+    {
         _context = context;
         _configuration = configuration;
     }
 
-    public async Task<LoginResponseDto?> LoginAsync(LoginDto loginDto) {
+    public async Task<LoginResponseDto?> LoginAsync(LoginDto loginDto)
+    {
         var user = await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Name == loginDto.Name && u.IsActive);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) {
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+        {
             return null;
         }
 
-        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+        var roles = user.UserRoles
+            .Select(ur => Enum.Parse<RoleName>(ur.Role.Name.ToString()))
+            .ToList();
         var token = GenerateJwtToken(user, roles);
 
-        var userResponse = new UserResponseDto {
+        var userResponse = new UserResponseDto
+        {
             Id = user.Id,
             Name = user.Name,
             Sex = user.Sex,
@@ -43,13 +50,15 @@ public class AuthService : IAuthService {
             Roles = roles
         };
 
-        return new LoginResponseDto {
+        return new LoginResponseDto
+        {
             Token = token,
             User = userResponse
         };
     }
 
-    public string GenerateJwtToken(User user, IEnumerable<RoleName> roles) {
+    public string GenerateJwtToken(User user, IEnumerable<RoleName> roles)
+    {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "YourSuperSecretKeyHere12345678901234567890"));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -61,7 +70,8 @@ public class AuthService : IAuthService {
         };
 
         // Add role claims
-        foreach (var role in roles) {
+        foreach (var role in roles)
+        {
             claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
         }
 
