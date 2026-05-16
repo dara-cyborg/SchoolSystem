@@ -117,47 +117,7 @@ namespace SchoolSystem.Desktop.Forms.Teacher
 
         private async Task LoadExistingScoresAsync()
         {
-            if (cboClassSubject.SelectedValue == null)
-                return;
-
-            try
-            {
-                int classSubjectId = Convert.ToInt32(cboClassSubject.SelectedValue);
-                short month = (short)nudMonth.Value;
-                short year = (short)nudYear.Value;
-
-                var scores = await ApiClient.Instance.GetAsync<List<MonthlyScoreResponseDto>>(
-                    $"/api/monthly-scores/class-subject/{classSubjectId}?month={month}&schoolYear={year}");
-
-                if (scores == null)
-                    return;
-
-                foreach (DataGridViewRow row in dgvScores.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    int studentId = Convert.ToInt32(row.Cells["colStudentId"].Value);
-
-                    var found = scores.FirstOrDefault(x => x.StudentId == studentId);
-
-                    if (found != null)
-                    {
-                        row.Cells["colScore"].Value = found.FinalScore;
-                        row.Cells["colLocked"].Value = found.IsLocked;
-
-                        if (found.IsLocked)
-                        {
-                            row.ReadOnly = true;
-                            row.DefaultCellStyle.BackColor = Color.LightGray;
-                            row.DefaultCellStyle.ForeColor = Color.DarkGray;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-            }
+            await Task.CompletedTask;
         }
 
         private async void btnSubmitScores_Click(object sender, EventArgs e)
@@ -217,7 +177,7 @@ namespace SchoolSystem.Desktop.Forms.Teacher
                     };
 
                     await ApiClient.Instance.PostAsync<MonthlyScoreResponseDto>(
-                        "/api/monthly-scores/submit", dto);
+                        "/api/monthlyscores/submit", dto);
 
                     row.Cells["colLocked"].Value = true;
                     row.ReadOnly = true;
