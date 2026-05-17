@@ -6,7 +6,8 @@ using SchoolSystem.Core.Models;
 
 namespace SchoolSystem.Api.Services;
 
-public class MonthlyReportService : IMonthlyReportService {
+public class MonthlyReportService : IMonthlyReportService
+{
     private readonly AppDbContext _context;
 
     public MonthlyReportService(AppDbContext context) {
@@ -102,14 +103,32 @@ public class MonthlyReportService : IMonthlyReportService {
         return MapToDto(report);
     }
 
-    public async Task<MonthlyReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default) {
+    public async Task<MonthlyReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default)
+    {
         var report = await _context.MonthlyReports
             .Include(mr => mr.Entries)
             .FirstOrDefaultAsync(mr => mr.Id == id, cancellationToken);
 
-        if (report == null) {
+        if (report == null)
+        {
             return null;
         }
+
+        return MapToDto(report);
+    }
+
+    public async Task<MonthlyReportDto?> GetReportByClassAsync(int classId, short month, short schoolYear, CancellationToken cancellationToken = default)
+    {
+        var report = await _context.MonthlyReports
+            .Include(mr => mr.Entries)
+            .FirstOrDefaultAsync(mr =>
+                mr.ClassId == classId &&
+                mr.Month == month &&
+                mr.SchoolYear == schoolYear,
+                cancellationToken);
+
+        if (report == null)
+            return null;
 
         return MapToDto(report);
     }
