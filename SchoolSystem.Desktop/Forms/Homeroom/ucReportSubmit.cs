@@ -57,6 +57,8 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             nudYear.Value = DateTime.Now.Year;
 
             _isInitializing = false;
+
+            await LoadExistingReportAsync();
         }
 
         private async Task LoadClasses()
@@ -74,6 +76,78 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading classes: {ex.Message}");
+            }
+        }
+
+        private async Task LoadExistingReportAsync()
+        {
+            if (_isInitializing) return;
+            if (cboClass.SelectedValue == null) return;
+
+            dgvReportResult.Rows.Clear();
+
+            try
+            {
+                int classId = (int)cboClass.SelectedValue;
+                string type = cboReportType.Text;
+
+                if (type == "Monthly")
+                {
+                    short month = (short)nudMonth.Value;
+                    short year = (short)nudYear.Value;
+
+                    var result = await ApiClient.Instance.GetAsync<MonthlyReportResponseDto>(
+                        $"/api/monthly-reports/by-class?classId={classId}&month={month}&schoolYear={year}");
+
+                    if (result != null)
+                    {
+                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        {
+                            Rank = (int)e.Rank,
+                            StudentId = (int)e.StudentId,
+                            TotalScore = (decimal)e.TotalScore
+                        }).ToList());
+                    }
+                }
+                else if (type == "Semester")
+                {
+                    short semester = short.Parse(cboSemester.Text);
+                    short year = (short)nudYear.Value;
+
+                    var result = await ApiClient.Instance.GetAsync<SemesterReportResponseDto>(
+                        $"/api/semester-reports/by-class?classId={classId}&semester={semester}&schoolYear={year}");
+
+                    if (result != null)
+                    {
+                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        {
+                            Rank = (int)e.Rank,
+                            StudentId = (int)e.StudentId,
+                            TotalScore = (decimal)e.TotalScore
+                        }).ToList());
+                    }
+                }
+                else if (type == "Yearly")
+                {
+                    short year = (short)nudYear.Value;
+
+                    var result = await ApiClient.Instance.GetAsync<YearlyReportResponseDto>(
+                        $"/api/yearly-reports/by-class?classId={classId}&schoolYear={year}");
+
+                    if (result != null)
+                    {
+                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        {
+                            Rank = (int)e.Rank,
+                            StudentId = (int)e.StudentId,
+                            TotalScore = (decimal)e.TotalScore
+                        }).ToList());
+                    }
+                }
+            }
+            catch
+            {
+                // No existing report found — grid stays empty
             }
         }
 
@@ -188,38 +262,43 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             dgvReportResult.Sort(dgvReportResult.Columns["Rank"], System.ComponentModel.ListSortDirection.Ascending);
         }
 
-        private void cboReportType_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboReportType_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_isInitializing) return;
             string type = cboReportType.Text;
             nudMonth.Enabled = (type == "Monthly");
             cboSemester.Enabled = (type == "Semester");
+            await LoadExistingReportAsync();
         }
 
-        private void cboClass_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboClass_SelectedIndexChanged(object sender, EventArgs e)
         {
             dgvReportResult.Rows.Clear();
+            await LoadExistingReportAsync();
         }
 
-        private void nudMonth_ValueChanged(object sender, EventArgs e)
+        private async void nudMonth_ValueChanged(object sender, EventArgs e)
         {
             if (nudYear.Value == DateTime.Now.Year && nudMonth.Value > DateTime.Now.Month)
             {
                 nudMonth.Value = DateTime.Now.Month;
             }
+            await LoadExistingReportAsync();
         }
 
-        private void nudYear_ValueChanged(object sender, EventArgs e)
+        private async void nudYear_ValueChanged(object sender, EventArgs e)
         {
             if (nudYear.Value > DateTime.Now.Year)
             {
                 nudYear.Value = DateTime.Now.Year;
             }
+            await LoadExistingReportAsync();
         }
 
-        private void cboSemester_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboSemester_SelectedIndexChanged(object sender, EventArgs e)
         {
             dgvReportResult.Rows.Clear();
+            await LoadExistingReportAsync();
         }
 
         private void dgvReportResult_CellContentClick(object sender, DataGridViewCellEventArgs e)

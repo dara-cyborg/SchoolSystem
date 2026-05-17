@@ -140,14 +140,31 @@ public class YearlyReportService : IYearlyReportService {
         return MapToDto(report);
     }
 
-    public async Task<YearlyReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default) {
+    public async Task<YearlyReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default)
+    {
         var report = await _context.YearlyReports
             .Include(yr => yr.Entries)
             .FirstOrDefaultAsync(yr => yr.Id == id, cancellationToken);
 
-        if (report == null) {
+        if (report == null)
+        {
             return null;
         }
+
+        return MapToDto(report);
+    }
+
+    public async Task<YearlyReportDto?> GetReportByClassAsync(int classId, short schoolYear, CancellationToken cancellationToken = default)
+    {
+        var report = await _context.YearlyReports
+            .Include(yr => yr.Entries)
+            .FirstOrDefaultAsync(yr =>
+                yr.ClassId == classId &&
+                yr.SchoolYear == schoolYear,
+                cancellationToken);
+
+        if (report == null)
+            return null;
 
         return MapToDto(report);
     }
