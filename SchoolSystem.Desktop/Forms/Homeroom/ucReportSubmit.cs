@@ -14,6 +14,7 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
     {
         public int Rank { get; set; }
         public int StudentId { get; set; }
+        public string StudentName { get; set; } = string.Empty;
         public decimal TotalScore { get; set; }
     }
 
@@ -32,7 +33,10 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             dgvReportResult.Columns.Clear();
             dgvReportResult.Columns.Add("Rank", "Rank");
             dgvReportResult.Columns.Add("StudentId", "Student ID");
+            dgvReportResult.Columns.Add("StudentName", "Student Name");
             dgvReportResult.Columns.Add("TotalScore", "Total Score");
+
+            dgvReportResult.Columns["StudentId"].Visible = false;
 
             dgvReportResult.ReadOnly = true;
             dgvReportResult.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -53,7 +57,13 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             cboSemester.Items.AddRange(new string[] { "1", "2" });
             cboSemester.SelectedIndex = 0;
 
+            // Fix: Month range 1-12
+            nudMonth.Minimum = 1;
+            nudMonth.Maximum = 12;
             nudMonth.Value = DateTime.Now.Month;
+
+            nudYear.Minimum = 2000;
+            nudYear.Maximum = 2100;
             nudYear.Value = DateTime.Now.Year;
 
             _isInitializing = false;
@@ -101,12 +111,12 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
 
                     if (result != null)
                     {
-                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                         {
                             Rank = (int)e.Rank,
                             StudentId = (int)e.StudentId,
                             TotalScore = (decimal)e.TotalScore
-                        }).ToList());
+                        }).ToList(), classId);
                     }
                 }
                 else if (type == "Semester")
@@ -119,12 +129,12 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
 
                     if (result != null)
                     {
-                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                         {
                             Rank = (int)e.Rank,
                             StudentId = (int)e.StudentId,
                             TotalScore = (decimal)e.TotalScore
-                        }).ToList());
+                        }).ToList(), classId);
                     }
                 }
                 else if (type == "Yearly")
@@ -136,18 +146,42 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
 
                     if (result != null)
                     {
-                        DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                        await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                         {
                             Rank = (int)e.Rank,
                             StudentId = (int)e.StudentId,
                             TotalScore = (decimal)e.TotalScore
-                        }).ToList());
+                        }).ToList(), classId);
                     }
                 }
             }
             catch
             {
                 // No existing report found — grid stays empty
+            }
+        }
+
+        private async Task DisplayResultsWithNames(List<ReportEntryDto> entries, int classId)
+        {
+            try
+            {
+                // Load students for this class to get names
+                var students = await ApiClient.Instance.GetAsync<List<StudentInReportDto>>(
+                    $"/api/classes/{classId}/students");
+
+                dgvReportResult.Rows.Clear();
+                foreach (var entry in entries)
+                {
+                    var studentName = students?.FirstOrDefault(s => s.Id == entry.StudentId)?.Name ?? entry.StudentId.ToString();
+                    dgvReportResult.Rows.Add(entry.Rank, entry.StudentId, studentName, entry.TotalScore);
+                }
+
+                dgvReportResult.Sort(dgvReportResult.Columns["Rank"], System.ComponentModel.ListSortDirection.Ascending);
+            }
+            catch
+            {
+                // Fallback to student ID if name fetch fails
+                DisplayResults(entries);
             }
         }
 
@@ -197,12 +231,12 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             if (result != null)
             {
                 MessageBox.Show($"Monthly Report for Month {result.Month} submitted and locked!");
-                DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                 {
                     Rank = (int)e.Rank,
                     StudentId = (int)e.StudentId,
                     TotalScore = (decimal)e.TotalScore
-                }).ToList());
+                }).ToList(), classId);
             }
         }
 
@@ -220,12 +254,12 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             if (result != null)
             {
                 MessageBox.Show($"Semester {result.Semester} Report generated successfully!");
-                DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                 {
                     Rank = (int)e.Rank,
                     StudentId = (int)e.StudentId,
                     TotalScore = (decimal)e.TotalScore
-                }).ToList());
+                }).ToList(), classId);
             }
         }
 
@@ -242,12 +276,12 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             if (result != null)
             {
                 MessageBox.Show("Yearly Report generated and rankings computed!");
-                DisplayResults(result.Entries.Select(e => new ReportEntryDto
+                await DisplayResultsWithNames(result.Entries.Select(e => new ReportEntryDto
                 {
                     Rank = (int)e.Rank,
                     StudentId = (int)e.StudentId,
                     TotalScore = (decimal)e.TotalScore
-                }).ToList());
+                }).ToList(), classId);
             }
         }
 
@@ -256,7 +290,7 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
             dgvReportResult.Rows.Clear();
             foreach (var entry in entries)
             {
-                dgvReportResult.Rows.Add(entry.Rank, entry.StudentId, entry.TotalScore);
+                dgvReportResult.Rows.Add(entry.Rank, entry.StudentId, entry.StudentId.ToString(), entry.TotalScore);
             }
 
             dgvReportResult.Sort(dgvReportResult.Columns["Rank"], System.ComponentModel.ListSortDirection.Ascending);
@@ -265,10 +299,41 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
         private async void cboReportType_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_isInitializing) return;
+
             string type = cboReportType.Text;
+
+            // Show/hide controls based on report type
             nudMonth.Enabled = (type == "Monthly");
             cboSemester.Enabled = (type == "Semester");
+
+            // Auto-adjust month range for semester
+            if (type == "Semester")
+            {
+                UpdateMonthRangeForSemester();
+            }
+            else if (type == "Monthly")
+            {
+                nudMonth.Minimum = 1;
+                nudMonth.Maximum = 12;
+            }
+
             await LoadExistingReportAsync();
+        }
+
+        private void UpdateMonthRangeForSemester()
+        {
+            if (cboSemester.Text == "1")
+            {
+                nudMonth.Minimum = 1;
+                nudMonth.Maximum = 6;
+                nudMonth.Value = 1;
+            }
+            else
+            {
+                nudMonth.Minimum = 7;
+                nudMonth.Maximum = 12;
+                nudMonth.Value = 7;
+            }
         }
 
         private async void cboClass_SelectedIndexChanged(object sender, EventArgs e)
@@ -279,24 +344,21 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
 
         private async void nudMonth_ValueChanged(object sender, EventArgs e)
         {
-            if (nudYear.Value == DateTime.Now.Year && nudMonth.Value > DateTime.Now.Month)
-            {
-                nudMonth.Value = DateTime.Now.Month;
-            }
             await LoadExistingReportAsync();
         }
 
         private async void nudYear_ValueChanged(object sender, EventArgs e)
         {
-            if (nudYear.Value > DateTime.Now.Year)
-            {
-                nudYear.Value = DateTime.Now.Year;
-            }
             await LoadExistingReportAsync();
         }
 
         private async void cboSemester_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (_isInitializing) return;
+
+            // Auto-adjust month range when semester changes
+            UpdateMonthRangeForSemester();
+
             dgvReportResult.Rows.Clear();
             await LoadExistingReportAsync();
         }
@@ -304,5 +366,11 @@ namespace SchoolSystem.Desktop.Forms.Homeroom
         private void dgvReportResult_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
         }
+    }
+
+    public class StudentInReportDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }
