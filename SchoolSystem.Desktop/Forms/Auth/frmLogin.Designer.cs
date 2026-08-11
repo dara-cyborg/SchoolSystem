@@ -22,7 +22,8 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent() {
+        private void InitializeComponent()
+        {
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
@@ -123,6 +124,7 @@
             FormBorderStyle = FormBorderStyle.FixedDialog;
             Name = "frmLogin";
             Text = "Login Form";
+            Load += frmLogin_Load;
             ResumeLayout(false);
             PerformLayout();
         }

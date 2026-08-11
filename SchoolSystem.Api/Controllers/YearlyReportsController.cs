@@ -9,12 +9,14 @@ using SchoolSystem.Core.Interfaces;
 namespace SchoolSystem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class YearlyReportsController : ControllerBase {
+[Route("api/yearly-reports")]
+public class YearlyReportsController : ControllerBase
+{
     private readonly IYearlyReportService _yearlyReportService;
     private readonly AppDbContext _context;
 
-    public YearlyReportsController(IYearlyReportService yearlyReportService, AppDbContext context) {
+    public YearlyReportsController(IYearlyReportService yearlyReportService, AppDbContext context)
+    {
         _yearlyReportService = yearlyReportService;
         _context = context;
     }
@@ -25,14 +27,38 @@ public class YearlyReportsController : ControllerBase {
     /// </summary>
     [HttpPost("submit")]
     [Authorize(Policy = "HomeroomOnly")]
-    public async Task<IActionResult> SubmitYearlyReport([FromBody] SubmitYearlyReportDto submitDto, CancellationToken cancellationToken = default) {
-        try {
+    public async Task<IActionResult> SubmitYearlyReport([FromBody] SubmitYearlyReportDto submitDto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
             var homeroomUserId = User.GetUserId();
             var result = await _yearlyReportService.SubmitReportAsync(submitDto, homeroomUserId, cancellationToken);
             return CreatedAtAction(nameof(GetYearlyReport), new { id = result.Id }, result);
-        } catch (InvalidOperationException ex) {
+        }
+        catch (InvalidOperationException ex)
+        {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Get a yearly report by class and school year
+    /// [homeroom]
+    /// </summary>
+    [HttpGet("by-class")]
+    [Authorize(Policy = "HomeroomOnly")]
+    public async Task<IActionResult> GetYearlyReportByClass(
+        [FromQuery] int classId,
+        [FromQuery] short schoolYear,
+        CancellationToken cancellationToken = default)
+    {
+
+        var result = await _yearlyReportService.GetReportByClassAsync(classId, schoolYear, cancellationToken);
+
+        if (result == null)
+            return NotFound(new { message = "No report found for the specified class and school year." });
+
+        return Ok(result);
     }
 
     /// <summary>
@@ -41,39 +67,46 @@ public class YearlyReportsController : ControllerBase {
     /// </summary>
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<IActionResult> GetYearlyReport(int id, CancellationToken cancellationToken = default) {
-        try {
+    public async Task<IActionResult> GetYearlyReport(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
             var result = await _yearlyReportService.GetReportAsync(id, cancellationToken);
-            if (result == null) {
+            if (result == null)
+            {
                 return NotFound(new { message = $"Yearly report with ID {id} does not exist." });
             }
 
-            // Parent can only view reports for their linked children's class
-            if (User.IsInRole("Parent")) {
+            if (User.IsInRole("Parent"))
+            {
                 var parentUserId = User.GetUserId();
                 var report = await _context.YearlyReports
                     .Include(yr => yr.Class)
                     .Include(yr => yr.Entries)
                     .FirstOrDefaultAsync(yr => yr.Id == id, cancellationToken);
 
-                if (report == null) {
+                if (report == null)
+                {
                     return NotFound(new { message = $"Yearly report with ID {id} does not exist." });
                 }
 
                 var hasAccessToClass = await _context.ParentStudents
                     .Include(ps => ps.Student)
-                    .AnyAsync(ps => 
+                    .AnyAsync(ps =>
                         ps.ParentUserId == parentUserId &&
                         ps.Student.ClassId == report.ClassId,
                         cancellationToken);
 
-                if (!hasAccessToClass) {
+                if (!hasAccessToClass)
+                {
                     return Forbid();
                 }
             }
 
             return Ok(result);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             return StatusCode(500, new { message = "An error occurred while retrieving the report.", error = ex.Message });
         }
     }

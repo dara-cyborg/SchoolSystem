@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolSystem.Api.Services;
+using SchoolSystem.Core.DTOs;
 using SchoolSystem.Core.DTOs.User;
 using SchoolSystem.Core.Exceptions;
 
@@ -20,12 +21,13 @@ public class UsersController : ControllerBase {
     /// Get paginated list of users with their roles
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) {
-        if (page < 1 || pageSize < 1) {
-            return BadRequest(new { message = "Page and PageSize must be greater than 0" });
-        }
-
-        var result = await _userService.GetUsersAsync(page, pageSize, cancellationToken);
+    public async Task<ActionResult<PagedResult<UserDto>>> GetUsers(
+     int page = 1,
+     int pageSize = 20,
+     string? search = null,
+     CancellationToken cancellationToken = default)
+    {
+        var result = await _userService.GetUsersAsync(page, pageSize, search, cancellationToken);
         return Ok(result);
     }
 
@@ -33,7 +35,7 @@ public class UsersController : ControllerBase {
     /// Get a specific user by ID with their roles
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id, CancellationToken cancellationToken = default) {
+    public async Task<IActionResult> GetUser(string? search,int id, CancellationToken cancellationToken = default) {
         var user = await _userService.GetUserByIdAsync(id, cancellationToken);
 
         if (user == null) {

@@ -149,14 +149,32 @@ public class SemesterReportService : ISemesterReportService {
         return MapToDto(report);
     }
 
-    public async Task<SemesterReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default) {
+    public async Task<SemesterReportDto?> GetReportAsync(int id, CancellationToken cancellationToken = default)
+    {
         var report = await _context.SemesterReports
             .Include(sr => sr.Entries)
             .FirstOrDefaultAsync(sr => sr.Id == id, cancellationToken);
 
-        if (report == null) {
+        if (report == null)
+        {
             return null;
         }
+
+        return MapToDto(report);
+    }
+
+    public async Task<SemesterReportDto?> GetReportByClassAsync(int classId, short semester, short schoolYear, CancellationToken cancellationToken = default)
+    {
+        var report = await _context.SemesterReports
+            .Include(sr => sr.Entries)
+            .FirstOrDefaultAsync(sr =>
+                sr.ClassId == classId &&
+                sr.Semester == semester &&
+                sr.SchoolYear == schoolYear,
+                cancellationToken);
+
+        if (report == null)
+            return null;
 
         return MapToDto(report);
     }

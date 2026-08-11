@@ -1,25 +1,29 @@
 ﻿namespace SchoolSystem.Core.Enums;
 
-public enum RoleName {
+public enum RoleName
+{
     SuperAdmin,
     Teacher,
     Homeroom,
     Parent
 }
 
-public enum AttendanceStatus {
+public enum AttendanceStatus
+{
     Present,
     InformedAbsent,
     UninformedAbsent
 }
 
-public enum ReportType {
+public enum ReportType
+{
     Monthly,
     Semester,
     Yearly
 }
 
-public enum SexType {
+public enum SexType
+{
     Male,
     Female
 }

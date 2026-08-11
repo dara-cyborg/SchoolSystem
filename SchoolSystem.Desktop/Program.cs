@@ -1,5 +1,6 @@
 using SchoolSystem.Desktop.Forms.Auth;
 using SchoolSystem.Desktop.Forms;
+using SchoolSystem.Desktop.Forms.Admin;
 
 static class Program
 {

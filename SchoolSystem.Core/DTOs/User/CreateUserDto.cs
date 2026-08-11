@@ -1,4 +1,4 @@
-﻿using SchoolSystem.Core.Enums;
+﻿  using SchoolSystem.Core.Enums;
 
 namespace SchoolSystem.Core.DTOs.User;
 
@@ -8,5 +8,7 @@ public class CreateUserDto {
     public DateTime? Dob { get; set; }
     public string? Contact { get; set; }
     public string Password { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
     public List<int> RoleIds { get; set; } = new();
+   
 }

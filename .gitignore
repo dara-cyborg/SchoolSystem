@@ -39,12 +39,14 @@ msbuild.wrn
 launch.json
 settings.json
 tasks.json
-D:\RUPP-Year-3\C#\SchoolSystem\SchoolSystem.Api\appsettings.json
 
 # ReSharper
 _ReSharper*/
 *.DotSettings.user
-
+SchoolSystem.Api/SchoolSystem.Api.csproj.lscache
+SchoolSystem.Core/SchoolSystem.Core.csproj.lscache
+SchoolSystem.Desktop/SchoolSystem.Desktop.csproj.lscache
+SchoolSystem.Web/SchoolSystem.Web.csproj.lscache
 # Rider
 .idea/
 *.sln.iml
